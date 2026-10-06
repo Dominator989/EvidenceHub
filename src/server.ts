@@ -197,6 +197,8 @@ app.post("/api/products/:productId/documents", (request, response) => {
     if (!user) return;
     try {
       service.getDocuments(request.params.productId, user.organisationId);
+      const document = service.getDocument(request.params.documentId);
+      if (!document || document.productId !== request.params.productId) return response.status(404).json({ error: "Document not found" });
       const extraction = ocr.get(request.params.documentId, user.organisationId);
       return extraction ? response.json(extraction) : response.status(404).json({ error: "Extraction not found" });
     } catch (error) {
@@ -211,6 +213,8 @@ app.post("/api/products/:productId/documents", (request, response) => {
     if (!result.success) return response.status(400).json({ error: result.error.flatten() });
     try {
       service.getDocuments(request.params.productId, user.organisationId);
+      const document = service.getDocument(request.params.documentId);
+      if (!document || document.productId !== request.params.productId) return response.status(404).json({ error: "Document not found" });
       return response.json(ocr.confirm(request.params.documentId, user.organisationId, user.id, result.data));
     } catch (error) {
       return response.status(404).json({ error: error instanceof Error ? error.message : "Extraction not found" });

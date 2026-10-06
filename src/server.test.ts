@@ -46,6 +46,12 @@ describe("server", () => {
       .attach("file", Buffer.from("test evidence"), "certificate.pdf");
     expect(upload.status).toBe(201);
     expect(upload.body.mimeType).toBe("application/pdf");
+    const extraction = await agent.get(`/api/products/${product.body.id}/documents/${upload.body.id}/extraction`);
+    expect(extraction.status).toBe(200);
+    expect(extraction.body.status).toBe("manual_required");
+    const confirmed = await agent.post(`/api/products/${product.body.id}/documents/${upload.body.id}/extraction/confirm`).send({ documentType: "Certificate", expiresAt: null });
+    expect(confirmed.status).toBe(200);
+    expect(confirmed.body.status).toBe("confirmed");
     const download = await agent.get(`/api/products/${product.body.id}/documents/${upload.body.id}/download`);
     expect(download.status).toBe(200);
     expect(download.body.toString()).toBe("test evidence");
