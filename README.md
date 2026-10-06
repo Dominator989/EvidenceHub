@@ -36,6 +36,7 @@ The `feature/proofstack-mvp` branch contains the first vertical slice:
 - Tenant isolation for product and document workflows
 - Evidence review queue with approve, reject, and request-changes actions
 - Immutable review audit events with reviewer and timestamp metadata
+- Reviewable OCR metadata extraction for image evidence
 - SQLite persistence with foreign-key enforcement
 - Typed Express API with Zod request validation
 - Domain tests and a TypeScript build
@@ -67,9 +68,13 @@ The current dashboard supports creating products, selecting products, adding
 required evidence, uploading evidence files, reviewing evidence, and reviewing
 the calculated compliance summary. Review decisions require notes when
 evidence is rejected or returned for changes, and each decision is recorded in
-an audit trail. Uploads are limited to 10 MB and stored outside the public
-directory using generated storage keys. Authentication and organisation-level
-tenant isolation are implemented for the development workflow. Before
+an audit trail. Image uploads are sent through Tesseract OCR and extracted
+metadata is presented as an untrusted suggestion until a user confirms it.
+PDFs currently receive a manual-review state because PDF text extraction is a
+separate processing step. Uploads are limited to 10 MB and stored outside the
+public directory using generated storage keys. Authentication and
+organisation-level tenant isolation are implemented for the development
+workflow. Before
 production use, add rate limiting, email verification, password reset, CSRF
 protection, database backups, and managed object storage.
 

@@ -31,6 +31,14 @@ history may be rebased while the project is still in early development.
 - Added a browser review queue with status and expiry details
 - Added tenant-scoped audit history endpoints
 
+## OCR milestone
+
+- Added persisted extraction records with confidence and lifecycle status
+- Added Tesseract OCR for PNG and JPEG uploads
+- Added safe manual-review fallback for PDF uploads
+- Added explicit metadata confirmation before extracted values are trusted
+- Added extraction review endpoints and dashboard controls
+
 ## Validation standard
 
 Each implementation milestone should include:

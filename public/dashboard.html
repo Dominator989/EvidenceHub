@@ -67,11 +67,25 @@
       el("document-requirement").innerHTML = '<option value="">Unassigned</option>' + requirements.map((requirement) => `<option value="${requirement.id}">${escapeHtml(requirement.name)}</option>`).join("");
       el("document-form").addEventListener("submit", uploadDocument);
       document.querySelectorAll("[data-review-id]").forEach((button) => button.addEventListener("click", () => reviewDocument(button.dataset.reviewId, button.dataset.reviewAction)));
+      await loadExtractions(documents);
     }
     function renderDocument(document) {
       const label = document.status === "pending_review" ? "Awaiting review" : document.status.replace("_", " ");
       const actions = document.status === "approved" ? "" : `<div class="review-actions"><button data-review-id="${document.id}" data-review-action="approved">Approve</button><button class="reject" data-review-id="${document.id}" data-review-action="rejected">Reject</button><button class="reject" data-review-id="${document.id}" data-review-action="changes_requested">Request changes</button></div>`;
-      return `<article class="evidence-card"><header><div><strong>${escapeHtml(document.fileName)}</strong><p>${escapeHtml(document.documentType)} · ${formatBytes(document.sizeBytes)}</p></div><span class="status ${document.status === "approved" ? "compliant" : document.status === "rejected" ? "incomplete" : "action_required"}">${escapeHtml(label)}</span></header><p class="muted">${document.expiresAt ? `Expires ${new Date(document.expiresAt).toLocaleDateString()}` : "No expiry date recorded"} · <a href="/api/products/${state.selected.id}/documents/${document.id}/download">Download</a></p>${actions}<div id="audit-${document.id}" class="audit muted"></div></article>`;
+      return `<article class="evidence-card"><header><div><strong>${escapeHtml(document.fileName)}</strong><p>${escapeHtml(document.documentType)} · ${formatBytes(document.sizeBytes)}</p></div><span class="status ${document.status === "approved" ? "compliant" : document.status === "rejected" ? "incomplete" : "action_required"}">${escapeHtml(label)}</span></header><p class="muted">${document.expiresAt ? `Expires ${new Date(document.expiresAt).toLocaleDateString()}` : "No expiry date recorded"} · <a href="/api/products/${state.selected.id}/documents/${document.id}/download">Download</a></p><div id="extraction-${document.id}" class="audit muted">Checking extracted metadata...</div>${actions}<div id="audit-${document.id}" class="audit muted"></div></article>`;
+    }
+    async function loadExtractions(documents) {
+      await Promise.all(documents.map(async (evidenceDocument) => {
+        try { const extraction = await api(`/api/products/${state.selected.id}/documents/${evidenceDocument.id}/extraction`); const target = el(`extraction-${evidenceDocument.id}`); if (extraction.status === "ready_for_review") target.innerHTML = `<strong>Extracted metadata needs confirmation</strong><br>${extraction.suggestedDocumentType ? `Suggested type: ${escapeHtml(extraction.suggestedDocumentType)}<br>` : ""}${extraction.suggestedExpiresAt ? `Suggested expiry: ${new Date(extraction.suggestedExpiresAt).toLocaleDateString()}<br>` : ""}<button data-confirm-extraction="${evidenceDocument.id}" style="width:auto;padding:7px 10px">Confirm suggestions</button>`; else target.textContent = extraction.status === "manual_required" ? "Manual metadata entry required for this PDF." : `OCR status: ${extraction.status}`; const confirm = document.querySelector(`[data-confirm-extraction="${evidenceDocument.id}"]`); if (confirm) confirm.addEventListener("click", () => confirmExtraction(evidenceDocument.id, extraction)); }
+        catch (error) { el(`extraction-${document.id}`).textContent = error.message; }
+      }));
+    }
+    async function confirmExtraction(documentId, extraction) {
+      const documentType = prompt("Confirm document type", extraction.suggestedDocumentType || "") || "";
+      if (!documentType) return;
+      const expiry = prompt("Confirm expiry date (YYYY-MM-DD), or leave blank", extraction.suggestedExpiresAt ? extraction.suggestedExpiresAt.slice(0, 10) : "");
+      try { await api(`/api/products/${state.selected.id}/documents/${documentId}/extraction/confirm`, { method: "POST", body: JSON.stringify({ documentType, expiresAt: expiry ? new Date(`${expiry}T00:00:00.000Z`).toISOString() : null }) }); await selectProduct(state.selected.id); }
+      catch (error) { el("notice").textContent = error.message; }
     }
     function formatBytes(bytes) { return bytes < 1024 ? `${bytes} B` : `${Math.round(bytes / 1024)} KB`; }
     async function reviewDocument(documentId, action) {
