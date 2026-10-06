@@ -84,6 +84,22 @@ export function createDatabase(databasePath = process.env.DATABASE_PATH ?? "./da
       channel TEXT NOT NULL,
       sent_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS share_links (
+      id TEXT PRIMARY KEY,
+      organisation_id TEXT NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+      product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      created_by_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      revoked_at TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS share_access_events (
+      id TEXT PRIMARY KEY,
+      share_link_id TEXT NOT NULL REFERENCES share_links(id) ON DELETE CASCADE,
+      accessed_at TEXT NOT NULL,
+      user_agent TEXT
+    );
   `);
   const columns = database.prepare("PRAGMA table_info(evidence_documents)").all() as Array<{ name: string }>;
   const columnNames = new Set(columns.map((column) => column.name));

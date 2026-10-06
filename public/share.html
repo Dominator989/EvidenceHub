@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shared evidence pack - EvidenceHub</title>
+  <style>
+    :root { color: #16231f; background: #f1f6f2; font-family: "Aptos", "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: linear-gradient(135deg, #f7faf7, #e9f2ec); }
+    header { padding: 34px max(24px, calc((100% - 880px) / 2)); background: #16231f; color: white; border-bottom: 4px solid #9acbb2; }
+    header p { color: #b7c9c0; margin: 8px 0 0; }
+    main { width: min(880px, calc(100% - 40px)); margin: 34px auto 60px; }
+    section { background: rgba(255, 255, 255, .95); border: 1px solid #dbe5df; border-radius: 10px; padding: 26px; margin-bottom: 18px; box-shadow: 0 14px 32px rgba(25, 54, 43, .08); }
+    .heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+    h1, h2, p { margin-top: 0; } h1 { margin-bottom: 0; font-size: 30px; } h2 { color: #174e3b; font-size: 18px; }
+    .muted { color: #66756f; } .status { display: inline-block; padding: 6px 10px; border-radius: 99px; font-size: 13px; font-weight: 700; text-transform: capitalize; }
+    .compliant { color: #176044; background: #dff3e8; } .action_required { color: #946d12; background: #fff4cf; } .incomplete { color: #9b3030; background: #fde6e3; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; } .metric { padding: 14px; background: #f3f7f4; border: 1px solid #e2ebe5; border-radius: 8px; } .metric strong { display: block; color: #174e3b; font-size: 25px; margin-top: 5px; }
+    .document { display: flex; justify-content: space-between; gap: 18px; align-items: center; padding: 15px 0; border-bottom: 1px solid #e4ece7; } .document:last-child { border-bottom: 0; } .document strong { display: block; } .document a { color: #174e3b; font-weight: 700; }
+    .error { color: #9b3030; } @media (max-width: 640px) { main { width: min(100% - 28px, 880px); margin-top: 20px; } section { padding: 20px; } .heading, .document { align-items: flex-start; flex-direction: column; } .metrics { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header><strong>EvidenceHub</strong><p>Read-only evidence pack</p></header>
+  <main id="content"><section><p class="muted">Loading shared evidence pack...</p></section></main>
+  <script>
+    const token = location.pathname.split("/").filter(Boolean).pop();
+    const content = document.getElementById("content");
+    async function load() {
+      try {
+        const response = await fetch(`/api/shared/${encodeURIComponent(token)}`);
+        const pack = await response.json();
+        if (!response.ok) throw new Error(pack.error || "This share link is unavailable.");
+        content.innerHTML = `<section><div class="heading"><div><h1>${escapeHtml(pack.product.name)}</h1><p class="muted">SKU ${escapeHtml(pack.product.sku)} · Link expires ${new Date(pack.expiresAt).toLocaleDateString()}</p></div><span class="status ${pack.compliance.status}">${pack.compliance.status.replace("_", " ")}</span></div><div class="metrics"><div class="metric">Required<strong>${pack.compliance.requiredEvidence}</strong></div><div class="metric">Approved<strong>${pack.compliance.approvedEvidence}</strong></div><div class="metric">Expiring soon<strong>${pack.compliance.expiringEvidence}</strong></div></div></section><section><h2>Evidence documents</h2>${pack.documents.length ? pack.documents.map((document) => `<div class="document"><div><strong>${escapeHtml(document.fileName)}</strong><span class="muted">${escapeHtml(document.documentType)} · ${document.status.replace("_", " ")}</span></div>${document.status === "approved" ? `<a href="${document.downloadUrl}">Download</a>` : ""}</div>`).join("") : '<p class="muted">No documents are included in this pack.</p>'}</section>`;
+      } catch (error) { content.innerHTML = `<section><h1>Shared pack unavailable</h1><p class="error">${escapeHtml(error.message)}</p><p class="muted">The link may have expired or been revoked.</p></section>`; }
+    }
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
+    load();
+  </script>
+</body>
+</html>

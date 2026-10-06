@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import type { EvidenceAuditEvent, EvidenceDocument, EvidenceExtraction, EvidenceRequirement, EvidenceStatus, Product, ReminderEvent } from "../domain/compliance.js";
+import type { EvidenceAuditEvent, EvidenceDocument, EvidenceExtraction, EvidenceRequirement, EvidenceStatus, Product, ReminderEvent, ShareAccessEvent, ShareLink } from "../domain/compliance.js";
 
 export class ComplianceRepository {
   constructor(private readonly database: Database.Database) {}
@@ -96,6 +96,44 @@ export class ComplianceRepository {
        WHERE document_id = ? AND organisation_id = ?
        ORDER BY sent_at DESC`
     ).all(documentId, organisationId) as ReminderEvent[];
+  }
+
+  createShareLink(link: ShareLink): ShareLink {
+    this.database.prepare(
+      `INSERT INTO share_links
+        (id, organisation_id, product_id, created_by_user_id, token_hash, expires_at, revoked_at, created_at)
+       VALUES (@id, @organisationId, @productId, @createdByUserId, @tokenHash, @expiresAt, @revokedAt, @createdAt)`
+    ).run(link);
+    return link;
+  }
+
+  getShareLink(tokenHash: string): ShareLink | undefined {
+    return this.database.prepare(
+      `SELECT id, organisation_id as organisationId, product_id as productId,
+        created_by_user_id as createdByUserId, token_hash as tokenHash,
+        expires_at as expiresAt, revoked_at as revokedAt, created_at as createdAt
+       FROM share_links WHERE token_hash = ?`
+    ).get(tokenHash) as ShareLink | undefined;
+  }
+
+  revokeShareLink(id: string, organisationId: string): boolean {
+    const result = this.database.prepare(
+      "UPDATE share_links SET revoked_at = @revokedAt WHERE id = @id AND organisation_id = @organisationId AND revoked_at IS NULL"
+    ).run({ id, organisationId, revokedAt: new Date().toISOString() });
+    return result.changes === 1;
+  }
+
+  addShareAccess(event: ShareAccessEvent): ShareAccessEvent {
+    this.database.prepare(
+      "INSERT INTO share_access_events (id, share_link_id, accessed_at, user_agent) VALUES (@id, @shareLinkId, @accessedAt, @userAgent)"
+    ).run(event);
+    return event;
+  }
+
+  getShareAccessEvents(shareLinkId: string): ShareAccessEvent[] {
+    return this.database.prepare(
+      "SELECT id, share_link_id as shareLinkId, accessed_at as accessedAt, user_agent as userAgent FROM share_access_events WHERE share_link_id = ? ORDER BY accessed_at DESC"
+    ).all(shareLinkId) as ShareAccessEvent[];
   }
 
   saveExtraction(extraction: EvidenceExtraction): EvidenceExtraction {

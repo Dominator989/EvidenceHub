@@ -69,6 +69,24 @@ export type ReminderEvent = {
   sentAt: string;
 };
 
+export type ShareLink = {
+  id: string;
+  organisationId: string;
+  productId: string;
+  createdByUserId: string;
+  tokenHash: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  createdAt: string;
+};
+
+export type ShareAccessEvent = {
+  id: string;
+  shareLinkId: string;
+  accessedAt: string;
+  userAgent: string | null;
+};
+
 export type ComplianceSummary = {
   productId: string;
   status: "compliant" | "action_required" | "incomplete";

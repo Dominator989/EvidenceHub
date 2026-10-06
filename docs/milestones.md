@@ -58,6 +58,13 @@ history may be rebased while the project is still in early development.
 - Added local reminder delivery abstraction for development and testing
 - Added reminder history and record-reminder API endpoints
 - Added a dashboard action for recording a reminder from the renewal queue
+
+## Secure sharing milestone
+
+- Added high-entropy, hashed share tokens with configurable expiry
+- Added revocation and access-event logging
+- Added a read-only public evidence pack page
+- Scoped shared document downloads to the linked product and approved records
 - Added extraction review endpoints and dashboard controls
 
 ## Validation standard

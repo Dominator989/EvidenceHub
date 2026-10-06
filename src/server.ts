@@ -12,6 +12,7 @@ import { ComplianceRepository } from "./infrastructure/compliance-repository.js"
 import { AuthRepository } from "./infrastructure/auth-repository.js";
 import { OcrService, TesseractOcrEngine } from "./application/ocr-service.js";
 import { LocalReminderDelivery, ReminderService } from "./application/reminder-service.js";
+import { ShareService } from "./application/share-service.js";
 
 const app = express();
 app.use(express.json());
@@ -21,6 +22,7 @@ const service = new ComplianceService(new ComplianceRepository(database));
 const auth = new AuthService(new AuthRepository(database));
 const ocr = new OcrService(new ComplianceRepository(database), new TesseractOcrEngine());
 const reminders = new ReminderService(new ComplianceRepository(database), new LocalReminderDelivery());
+const sharing = new ShareService(new ComplianceRepository(database));
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -33,6 +35,10 @@ const uploadDirectory = path.join(process.cwd(), "data", "uploads");
 
 app.get("/", (_request, response) => {
   response.redirect("/login.html");
+});
+
+app.get("/shared/:token", (_request, response) => {
+  response.sendFile(path.join(process.cwd(), "public", "share.html"));
 });
 
 app.get("/api/health", (_request, response) => {
@@ -112,6 +118,7 @@ const extractionConfirmationSchema = z.object({
   documentType: z.string().min(1),
   expiresAt: z.string().datetime().nullable()
 });
+const shareLinkSchema = z.object({ expiresInDays: z.number().int().min(1).max(30).default(7) });
 
 app.post("/api/products", (request, response) => {
   const user = requireUser(request, response);
@@ -285,6 +292,70 @@ app.get("/api/products/:productId/renewals", (request, response) => {
   } catch (error) {
     return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
   }
+});
+
+app.post("/api/products/:productId/share-links", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
+  const result = shareLinkSchema.safeParse(request.body);
+  if (!result.success) return response.status(400).json({ error: result.error.flatten() });
+  try {
+    const created = sharing.createLink(request.params.productId, user.organisationId, user.id, result.data.expiresInDays);
+    return response.status(201).json({ id: created.link.id, expiresAt: created.link.expiresAt, url: `/shared/${created.token}` });
+  } catch (error) {
+    return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
+  }
+});
+
+app.post("/api/share-links/:linkId/revoke", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
+  try {
+    sharing.revokeLink(request.params.linkId, user.organisationId);
+    return response.status(204).send();
+  } catch (error) {
+    return response.status(404).json({ error: error instanceof Error ? error.message : "Share link not found" });
+  }
+});
+
+function activeShareLink(token: string, response: express.Response) {
+  const link = sharing.getLink(token);
+  if (!link || link.revokedAt || new Date(link.expiresAt) <= new Date()) {
+    response.status(404).json({ error: "Share link is unavailable" });
+    return undefined;
+  }
+  sharing.recordAccess(link, new Date().toISOString(), response.req.get("user-agent"));
+  return link;
+}
+
+app.get("/api/shared/:token", (request, response) => {
+  const link = activeShareLink(request.params.token, response);
+  if (!link) return;
+  try {
+    const pack = service.getEvidencePack(link.productId, link.organisationId);
+    return response.json({
+      expiresAt: link.expiresAt,
+      product: { name: pack.product.name, sku: pack.product.sku },
+      compliance: pack.compliance,
+      requirements: pack.requirements,
+      documents: pack.documents.map(({ storageKey: _storageKey, ...document }) => ({
+        ...document,
+        downloadUrl: `/api/shared/${request.params.token}/documents/${document.id}`
+      }))
+    });
+  } catch {
+    return response.status(404).json({ error: "Shared product not found" });
+  }
+});
+
+app.get("/api/shared/:token/documents/:documentId", async (request, response) => {
+  const link = activeShareLink(request.params.token, response);
+  if (!link) return;
+  const document = service.getDocument(request.params.documentId);
+  if (!document || document.productId !== link.productId || !document.storageKey) return response.status(404).json({ error: "Document not found" });
+  const storagePath = path.resolve(uploadDirectory, document.storageKey);
+  if (path.dirname(storagePath) !== path.resolve(uploadDirectory)) return response.status(404).json({ error: "Document not found" });
+  return response.type(document.mimeType).download(storagePath, document.fileName);
 });
 
 app.post("/api/products/:productId/documents/:documentId/reminders", (request, response) => {

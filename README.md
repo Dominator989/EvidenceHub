@@ -40,6 +40,7 @@ The `feature/proofstack-mvp` branch contains the first vertical slice:
 - Downloadable product evidence packs with compliance manifest and source files
 - Renewal queue for approved evidence that is expired or expiring soon
 - Local reminder event history with a provider-ready delivery boundary
+- Expiring, revocable read-only evidence sharing links for auditors and customers
 - SQLite persistence with foreign-key enforcement
 - Typed Express API with Zod request validation
 - Domain tests and a TypeScript build
@@ -98,6 +99,10 @@ The dashboard also includes a renewal queue with selectable 30, 60, and
 users can record a local reminder event against the document. The current
 delivery channel is intentionally local; email delivery can be added behind the
 same application boundary later.
+
+Product owners can create a share link that expires within 1 to 30 days. Shared
+packs are read-only, log access events, expose only approved document downloads,
+and can be revoked by the owning organisation.
 
 The current dashboard supports creating products, selecting products, adding
 required evidence, uploading evidence files, reviewing evidence, and reviewing

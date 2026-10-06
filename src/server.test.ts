@@ -125,6 +125,34 @@ describe("server", () => {
     expect(history.body[0].id).toBe(reminder.body.id);
   });
 
+  it("creates, serves, and revokes an expiring shared evidence link", async () => {
+    const agent = await authenticatedAgent("sharing");
+    const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Shared test", sku: `SHARED-${Date.now()}` });
+    const upload = await agent
+      .post(`/api/products/${product.body.id}/documents`)
+      .field("documentType", "Certificate")
+      .attach("file", Buffer.from("shared evidence"), "certificate.pdf");
+    await agent.post(`/api/products/${product.body.id}/documents/${upload.body.id}/review`).send({ action: "approved" });
+
+    const created = await agent.post(`/api/products/${product.body.id}/share-links`).send({ expiresInDays: 7 });
+    expect(created.status).toBe(201);
+    const token = created.body.url.split("/").pop();
+    const sharedPage = await request(app).get(`/shared/${token}`);
+    expect(sharedPage.status).toBe(200);
+    expect(sharedPage.text).toContain("EvidenceHub");
+    const sharedPack = await request(app).get(`/api/shared/${token}`);
+    expect(sharedPack.status).toBe(200);
+    expect(sharedPack.body.product).toEqual({ name: "Shared test", sku: product.body.sku });
+    expect(sharedPack.body.documents[0]).not.toHaveProperty("storageKey");
+    const sharedDownload = await request(app).get(sharedPack.body.documents[0].downloadUrl);
+    expect(sharedDownload.status).toBe(200);
+    expect(sharedDownload.body.toString()).toBe("shared evidence");
+
+    const revoked = await agent.post(`/api/share-links/${created.body.id}/revoke`);
+    expect(revoked.status).toBe(204);
+    expect((await request(app).get(`/api/shared/${token}`)).status).toBe(404);
+  });
+
   it("records review decisions and requires notes for negative decisions", async () => {
     const agent = await authenticatedAgent("review");
     const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Review test", sku: `REVIEW-${Date.now()}` });
