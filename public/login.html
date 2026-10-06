@@ -8,6 +8,11 @@
     :root { font-family: system-ui, sans-serif; color: #172033; background: #f4f7fb; }
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; } main { width: min(420px, calc(100% - 40px)); background: white; padding: 30px; border: 1px solid #dce4ef; border-radius: 14px; }
     h1 { color: #267a60; } label { display: block; font-weight: 700; font-size: 13px; margin: 14px 0 6px; } input, button { width: 100%; padding: 11px; border: 1px solid #c7d3e3; border-radius: 8px; font: inherit; box-sizing: border-box; } button { margin-top: 18px; background: #267a60; color: white; border: 0; font-weight: 700; cursor: pointer; } .hidden { display: none; } .error { color: #9b3030; min-height: 20px; }
+    :root { --ink: #16231f; --muted: #66756f; --green: #227254; --green-dark: #174e3b; --line: #dbe5df; }
+    body { color: var(--ink); background: radial-gradient(circle at 12% 10%, #e3f1e9 0, transparent 32%), linear-gradient(135deg, #f5f8f4 0%, #e9f1ec 100%); font-family: "Aptos", "Segoe UI", sans-serif; }
+    main { padding: 38px; border-color: var(--line); border-radius: 10px; box-shadow: 0 20px 50px rgba(25, 54, 43, .12); } h1 { margin-bottom: 8px; color: var(--green-dark); font-size: 32px; letter-spacing: -.02em; } main > p { color: var(--muted); line-height: 1.55; } hr { margin: 28px 0 22px; border: 0; border-top: 1px solid var(--line); }
+    label { color: var(--ink); } input { background: #fbfcf9; border-color: #c7d6cd; } input:focus { outline: 3px solid rgba(86, 166, 125, .2); border-color: var(--green); } button { background: var(--green); } button:hover { background: var(--green-dark); } a { color: var(--green-dark); font-weight: 700; } .error { color: #9b3030; }
+    @media (max-width: 480px) { main { padding: 28px 24px; } }
   </style>
 </head>
 <body>
