@@ -33,6 +33,25 @@ export class ComplianceService {
     };
   }
 
+  getRenewalQueue(productId: string, organisationId: string, days = 30) {
+    const product = this.assertProduct(productId, organisationId);
+    const requirements = new Map(this.repository.getRequirements(productId).map((requirement) => [requirement.id, requirement.name]));
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() + days);
+
+    return this.repository.getDocuments(productId)
+      .filter((document) => document.status === "approved" && document.expiresAt !== null && new Date(document.expiresAt) <= cutoff)
+      .sort((left, right) => new Date(left.expiresAt as string).getTime() - new Date(right.expiresAt as string).getTime())
+      .map((document) => ({
+        document,
+        productId: product.id,
+        requirementName: document.requirementId ? requirements.get(document.requirementId) ?? null : null,
+        renewalStatus: new Date(document.expiresAt as string) < now ? "expired" : "expiring_soon",
+        daysUntilExpiry: Math.ceil((new Date(document.expiresAt as string).getTime() - now.getTime()) / 86_400_000)
+      }));
+  }
+
   getDocument(id: string): EvidenceDocument | undefined {
     return this.repository.getDocument(id);
   }

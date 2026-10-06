@@ -44,6 +44,13 @@ history may be rebased while the project is still in early development.
 - Included compliance status, requirements, document metadata, and review history
 - Included the original uploaded evidence files in the exported pack
 - Added a dashboard action and automated endpoint coverage
+
+## Renewal queue milestone
+
+- Added a tenant-scoped renewal queue for approved evidence
+- Included expired and upcoming evidence with days-until-expiry details
+- Added 30, 60, and 90-day dashboard filters
+- Added automated coverage for renewal eligibility and access control
 - Added extraction review endpoints and dashboard controls
 
 ## Validation standard

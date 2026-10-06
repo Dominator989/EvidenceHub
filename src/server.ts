@@ -271,6 +271,20 @@ app.get("/api/products/:productId/compliance", (request, response) => {
   }
 });
 
+app.get("/api/products/:productId/renewals", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
+  const days = Number(request.query.days ?? 30);
+  if (!Number.isInteger(days) || days < 1 || days > 365) {
+    return response.status(400).json({ error: "The renewal window must be a whole number between 1 and 365 days" });
+  }
+  try {
+    return response.json(service.getRenewalQueue(request.params.productId, user.organisationId, days));
+  } catch (error) {
+    return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
+  }
+});
+
 app.get("/api/products/:productId/evidence-pack", async (request, response) => {
   const user = requireUser(request, response);
   if (!user) return;

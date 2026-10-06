@@ -85,6 +85,25 @@ describe("server", () => {
     expect(pack.body.length).toBeGreaterThan(0);
   });
 
+  it("lists approved evidence due for renewal", async () => {
+    const agent = await authenticatedAgent("renewals");
+    const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Renewal test", sku: `RENEWAL-${Date.now()}` });
+    expect(product.status).toBe(201);
+    const upload = await agent
+      .post(`/api/products/${product.body.id}/documents`)
+      .field("documentType", "Insurance certificate")
+      .field("expiresAt", new Date(Date.now() + 7 * 86_400_000).toISOString())
+      .attach("file", Buffer.from("renewal evidence"), "insurance.pdf");
+    expect(upload.status).toBe(201);
+    const review = await agent.post(`/api/products/${product.body.id}/documents/${upload.body.id}/review`).send({ action: "approved" });
+    expect(review.status).toBe(200);
+
+    const renewals = await agent.get(`/api/products/${product.body.id}/renewals?days=30`);
+    expect(renewals.status).toBe(200);
+    expect(renewals.body[0]).toMatchObject({ renewalStatus: "expiring_soon", requirementName: null });
+    expect(renewals.body[0].document).toMatchObject({ id: upload.body.id, status: "approved" });
+  });
+
   it("records review decisions and requires notes for negative decisions", async () => {
     const agent = await authenticatedAgent("review");
     const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Review test", sku: `REVIEW-${Date.now()}` });
