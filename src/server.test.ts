@@ -51,6 +51,24 @@ describe("server", () => {
     expect(download.body.toString()).toBe("test evidence");
   });
 
+  it("records review decisions and requires notes for negative decisions", async () => {
+    const agent = await authenticatedAgent("review");
+    const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Review test", sku: `REVIEW-${Date.now()}` });
+    const upload = await agent
+      .post(`/api/products/${product.body.id}/documents`)
+      .field("documentType", "Certificate")
+      .attach("file", Buffer.from("review evidence"), "review.pdf");
+    expect(upload.status).toBe(201);
+    const rejectedWithoutNote = await agent.post(`/api/products/${product.body.id}/documents/${upload.body.id}/review`).send({ action: "rejected" });
+    expect(rejectedWithoutNote.status).toBe(400);
+    const rejected = await agent.post(`/api/products/${product.body.id}/documents/${upload.body.id}/review`).send({ action: "rejected", note: "The certificate is expired" });
+    expect(rejected.status).toBe(200);
+    expect(rejected.body.status).toBe("rejected");
+    const audit = await agent.get(`/api/products/${product.body.id}/documents/${upload.body.id}/audit`);
+    expect(audit.status).toBe(200);
+    expect(audit.body[0]).toMatchObject({ action: "rejected", note: "The certificate is expired" });
+  });
+
   it("does not expose products across organisations", async () => {
     const owner = await authenticatedAgent("owner");
     const other = await authenticatedAgent("other");
