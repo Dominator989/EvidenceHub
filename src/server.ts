@@ -191,6 +191,7 @@ app.post("/api/products/:productId/documents", (request, response) => {
       return response.status(message.startsWith("Product '") ? 404 : 500).json({ error: message });
     }
   });
+});
 
   app.get("/api/products/:productId/documents/:documentId/extraction", (request, response) => {
     const user = requireUser(request, response);
@@ -220,7 +221,6 @@ app.post("/api/products/:productId/documents", (request, response) => {
       return response.status(404).json({ error: error instanceof Error ? error.message : "Extraction not found" });
     }
   });
-});
 
 app.get("/api/products/:productId/documents/:documentId/download", (request, response) => {
   const user = requireUser(request, response);

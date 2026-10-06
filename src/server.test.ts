@@ -33,6 +33,13 @@ describe("server", () => {
     expect(response.body).toEqual(expect.any(Array));
   });
 
+  it("registers extraction routes before the first upload", async () => {
+    const agent = await authenticatedAgent("routes");
+    const response = await agent.get("/api/products/missing-product/documents/missing-document/extraction");
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: "Product 'missing-product' was not found" });
+  });
+
   it("uploads an evidence file and serves it only for its product", async () => {
     const agent = await authenticatedAgent("upload");
     const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Upload test", sku: `UPLOAD-${Date.now()}` });
