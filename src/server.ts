@@ -8,6 +8,41 @@ const app = express();
 app.use(express.json());
 const service = new ComplianceService(new ComplianceRepository(createDatabase()));
 
+app.get("/", (_request, response) => {
+  response.type("html").send(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EvidenceHub</title>
+    <style>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #101827; color: #e5edf8; }
+      main { width: min(680px, calc(100% - 40px)); padding: 40px; border: 1px solid #2b3a52; border-radius: 16px; background: #172338; }
+      h1 { margin-top: 0; color: #8ed1b2; }
+      code { padding: 3px 6px; border-radius: 5px; background: #0d1420; color: #b9d7ff; }
+      li { margin: 12px 0; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>EvidenceHub is running</h1>
+      <p>The API is ready for the first evidence-management workflow.</p>
+      <ul>
+        <li>Create a product: <code>POST /api/products</code></li>
+        <li>Add an evidence requirement: <code>POST /api/products/:productId/requirements</code></li>
+        <li>Check compliance: <code>GET /api/products/:productId/compliance</code></li>
+      </ul>
+      <p>See the README for example requests and development commands.</p>
+    </main>
+  </body>
+</html>`);
+});
+
+app.get("/api/health", (_request, response) => {
+  response.json({ status: "ok", service: "evidencehub" });
+});
+
 const productSchema = z.object({
   organisationId: z.string().min(1),
   name: z.string().min(1),
