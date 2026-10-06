@@ -4,11 +4,11 @@ EvidenceHub is a compliance evidence workspace for small businesses. It keeps
 supplier, product, insurance, safety, and certification documents organised,
 reviewable, and ready to share with an auditor or customer.
 
-## Planned MVP
+## Product scope
 
 - Create organisations, products, and suppliers
 - Upload and securely store evidence documents
-- Extract document metadata with OCR
+- Review extracted document metadata
 - Track expiry dates and missing evidence
 - Record approvals and review history
 - Send renewal reminders
@@ -18,7 +18,7 @@ reviewable, and ready to share with an auditor or customer.
 
 - Evidence first: every compliance status links to a source document
 - Human approval: extracted data is reviewable before it is trusted
-- Explainable AI: summaries cite the documents they came from
+- Explainable automation: summaries cite the documents they came from
 - Secure by default: tenant isolation, least-privilege access, and audit logs
 
 ## Current implementation
@@ -69,13 +69,9 @@ tenant isolation are implemented for the development workflow. Before
 production use, add rate limiting, email verification, password reset, CSRF
 protection, database backups, and managed object storage.
 
-### Example workflow
+### Development notes
 
-```bash
-curl -X POST http://localhost:3000/api/products ^
-  -H "Content-Type: application/json" ^
-  -d "{\"organisationId\":\"org-1\",\"name\":\"Sample product\",\"sku\":\"SKU-1\"}"
-```
-
-The API is intentionally small at this stage. Authentication, tenant
-boundaries, secure file storage, and OCR are planned before production use.
+The API requires an authenticated session for organisation data. Create an
+account through the browser dashboard before using product endpoints. The
+current implementation is intentionally focused on a small, testable workflow;
+OCR, reminders, and external object storage are planned follow-up features.
