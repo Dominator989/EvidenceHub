@@ -34,6 +34,19 @@ The `feature/proofstack-mvp` branch contains the first vertical slice:
 
 ## Local development
 
+### One-click Windows launch
+
+Double-click `start-app.bat`, or run this from PowerShell:
+
+```powershell
+./start-app.ps1
+```
+
+The script checks that Node.js 20 or newer is installed, installs dependencies
+when needed, and starts the development API.
+
+### Manual launch
+
 ```bash
 npm install
 npm run dev
