@@ -48,7 +48,7 @@ const uploadDirectory = path.join(process.cwd(), "data", "uploads");
 async function main(): Promise<void> {
   await mkdir(uploadDirectory, { recursive: true });
   const sampleStorageKey = "demo-sunscreen-certificate.pdf";
-  await writeFile(path.join(uploadDirectory, sampleStorageKey), Buffer.from("%PDF-1.4\n% EvidenceHub demo certificate\n%%EOF\n"), { flag: "a" });
+  await writeFile(path.join(uploadDirectory, sampleStorageKey), Buffer.from("%PDF-1.4\n% EvidenceHub demo certificate\n%%EOF\n"));
   insertOnce("evidence_documents", {
     id: "demo-doc-sunscreen-certificate",
     product_id: productIds.sunscreen,
