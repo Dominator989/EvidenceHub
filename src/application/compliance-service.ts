@@ -13,6 +13,10 @@ export class ComplianceService {
     });
   }
 
+  getProducts(): Product[] {
+    return this.repository.getProducts();
+  }
+
   addRequirement(productId: string, input: { name: string; required: boolean }): EvidenceRequirement {
     this.assertProduct(productId);
     return this.repository.addRequirement({ id: randomUUID(), productId, ...input });

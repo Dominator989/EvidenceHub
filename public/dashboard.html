@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EvidenceHub dashboard</title>
+  <style>
+    :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #172033; background: #f4f7fb; }
+    * { box-sizing: border-box; } body { margin: 0; } header { padding: 28px max(24px, calc((100% - 1120px) / 2)); background: #172033; color: white; }
+    header p { color: #afbdd3; margin-bottom: 0; } main { max-width: 1120px; margin: 32px auto; padding: 0 24px; display: grid; gap: 24px; grid-template-columns: 280px 1fr; }
+    section, aside { background: white; border: 1px solid #dce4ef; border-radius: 14px; padding: 22px; box-shadow: 0 4px 16px #1720330d; }
+    h1, h2, h3 { margin-top: 0; } h1 { margin-bottom: 6px; } h2 { font-size: 19px; } label { display: block; font-size: 13px; font-weight: 700; margin: 14px 0 6px; }
+    input, select, button { width: 100%; border: 1px solid #c7d3e3; border-radius: 8px; padding: 10px; font: inherit; } button { cursor: pointer; background: #267a60; color: white; border: 0; font-weight: 700; margin-top: 16px; }
+    button:hover { background: #1d624d; } .product { padding: 13px; border: 1px solid #dce4ef; border-radius: 9px; margin: 10px 0; cursor: pointer; } .product.selected { border-color: #267a60; background: #eef9f4; }
+    .muted { color: #63728a; font-size: 14px; } .status { display: inline-block; padding: 6px 10px; border-radius: 99px; font-size: 13px; font-weight: 700; } .compliant { color: #176044; background: #d9f4e8; } .action_required { color: #805b00; background: #fff0c2; } .incomplete { color: #9b3030; background: #fde0e0; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; } .metric { padding: 14px; background: #f4f7fb; border-radius: 9px; } .metric strong { display: block; font-size: 24px; margin-top: 5px; }
+    li { margin: 8px 0; } .notice { min-height: 20px; color: #9b3030; font-size: 14px; } @media (max-width: 760px) { main { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header><h1>EvidenceHub</h1><p>Evidence inventory and compliance workspace</p></header>
+  <main>
+    <aside>
+      <h2>Products</h2>
+      <div id="products"><p class="muted">Loading products...</p></div>
+      <h3>Add product</h3>
+      <form id="product-form">
+        <label for="product-name">Name</label><input id="product-name" required placeholder="e.g. Organic face cream">
+        <label for="product-sku">SKU</label><input id="product-sku" required placeholder="e.g. FACE-001">
+        <button>Create product</button>
+      </form>
+    </aside>
+    <section id="detail"><h2>Select a product</h2><p class="muted">Create or select a product to manage its evidence.</p></section>
+  </main>
+  <script>
+    const state = { products: [], selected: null };
+    const el = (id) => document.getElementById(id);
+    async function api(path, options) {
+      const response = await fetch(path, { headers: { "Content-Type": "application/json" }, ...options });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error?.message || body.error || "Request failed");
+      return body;
+    }
+    async function loadProducts() {
+      state.products = await api("/api/products");
+      el("products").innerHTML = state.products.length ? state.products.map((p) =>
+        `<div class="product ${state.selected?.id === p.id ? "selected" : ""}" data-id="${p.id}"><strong>${escapeHtml(p.name)}</strong><br><span class="muted">${escapeHtml(p.sku)}</span></div>`
+      ).join("") : '<p class="muted">No products yet.</p>';
+      document.querySelectorAll(".product").forEach((item) => item.addEventListener("click", () => selectProduct(item.dataset.id)));
+    }
+    async function selectProduct(id) {
+      state.selected = state.products.find((p) => p.id === id);
+      await loadProducts();
+      const compliance = await api(`/api/products/${id}/compliance`);
+      el("detail").innerHTML = `<h2>${escapeHtml(state.selected.name)} <span class="status ${compliance.status}">${compliance.status.replace("_", " ")}</span></h2>
+        <p class="muted">SKU ${escapeHtml(state.selected.sku)}</p>
+        <div class="grid"><div class="metric">Required<strong>${compliance.requiredEvidence}</strong></div><div class="metric">Approved<strong>${compliance.approvedEvidence}</strong></div><div class="metric">Expiring soon<strong>${compliance.expiringEvidence}</strong></div></div>
+        <h3>Missing requirements</h3>${compliance.missingRequirements.length ? `<ul>${compliance.missingRequirements.map(escapeHtml).map((x) => `<li>${x}</li>`).join("")}</ul>` : '<p class="muted">All required evidence is approved.</p>'}
+        <form id="requirement-form"><h3>Add evidence requirement</h3><label for="requirement-name">Requirement name</label><input id="requirement-name" required placeholder="e.g. Safety certificate"><button>Add requirement</button></form>
+        <p id="notice" class="notice"></p>`;
+      el("requirement-form").addEventListener("submit", addRequirement);
+    }
+    async function addRequirement(event) {
+      event.preventDefault();
+      try { await api(`/api/products/${state.selected.id}/requirements`, { method: "POST", body: JSON.stringify({ name: el("requirement-name").value, required: true }) }); await selectProduct(state.selected.id); }
+      catch (error) { el("notice").textContent = error.message; }
+    }
+    el("product-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try { const product = await api("/api/products", { method: "POST", body: JSON.stringify({ organisationId: "default", name: el("product-name").value, sku: el("product-sku").value }) }); event.target.reset(); await loadProducts(); await selectProduct(product.id); }
+      catch (error) { alert(error.message); }
+    });
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
+    loadProducts().catch((error) => { el("products").textContent = error.message; });
+  </script>
+</body>
+</html>

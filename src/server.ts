@@ -1,4 +1,5 @@
 import express from "express";
+import path from "node:path";
 import { z } from "zod";
 import { ComplianceService } from "./application/compliance-service.js";
 import { createDatabase } from "./infrastructure/database.js";
@@ -6,37 +7,11 @@ import { ComplianceRepository } from "./infrastructure/compliance-repository.js"
 
 const app = express();
 app.use(express.json());
+app.use(express.static(path.join(process.cwd(), "public")));
 const service = new ComplianceService(new ComplianceRepository(createDatabase()));
 
 app.get("/", (_request, response) => {
-  response.type("html").send(`<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>EvidenceHub</title>
-    <style>
-      :root { color-scheme: dark; font-family: system-ui, sans-serif; }
-      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #101827; color: #e5edf8; }
-      main { width: min(680px, calc(100% - 40px)); padding: 40px; border: 1px solid #2b3a52; border-radius: 16px; background: #172338; }
-      h1 { margin-top: 0; color: #8ed1b2; }
-      code { padding: 3px 6px; border-radius: 5px; background: #0d1420; color: #b9d7ff; }
-      li { margin: 12px 0; }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>EvidenceHub is running</h1>
-      <p>The API is ready for the first evidence-management workflow.</p>
-      <ul>
-        <li>Create a product: <code>POST /api/products</code></li>
-        <li>Add an evidence requirement: <code>POST /api/products/:productId/requirements</code></li>
-        <li>Check compliance: <code>GET /api/products/:productId/compliance</code></li>
-      </ul>
-      <p>See the README for example requests and development commands.</p>
-    </main>
-  </body>
-</html>`);
+  response.redirect("/dashboard.html");
 });
 
 app.get("/api/health", (_request, response) => {
@@ -61,6 +36,10 @@ app.post("/api/products", (request, response) => {
   const result = productSchema.safeParse(request.body);
   if (!result.success) return response.status(400).json({ error: result.error.flatten() });
   return response.status(201).json(service.createProduct(result.data));
+});
+
+app.get("/api/products", (_request, response) => {
+  return response.json(service.getProducts());
 });
 
 app.post("/api/products/:productId/requirements", (request, response) => {

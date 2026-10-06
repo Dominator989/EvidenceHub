@@ -28,6 +28,8 @@ The `feature/proofstack-mvp` branch contains the first vertical slice:
 - Products and evidence requirements
 - Evidence document records with review status and expiry dates
 - Compliance calculation based on required, approved, and expiring evidence
+- Browser dashboard for creating products and requirements
+- Product list and health API endpoints
 - SQLite persistence with foreign-key enforcement
 - Typed Express API with Zod request validation
 - Domain tests and a TypeScript build
@@ -52,8 +54,13 @@ npm install
 npm run dev
 ```
 
-The API listens on `http://localhost:3000` by default. The database is created
+The dashboard is available at `http://localhost:3000`. The database is created
 at `./data/evidencehub.sqlite`.
+
+The current dashboard supports creating products, selecting products, adding
+required evidence, and reviewing the calculated compliance summary. Document
+uploads and authentication are deliberately the next milestones; the current
+API stores document metadata only.
 
 ### Example workflow
 

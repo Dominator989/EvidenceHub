@@ -16,6 +16,12 @@ export class ComplianceRepository {
     return row as Product | undefined;
   }
 
+  getProducts(): Product[] {
+    return this.database.prepare(
+      "SELECT id, organisation_id as organisationId, name, sku, created_at as createdAt FROM products ORDER BY created_at DESC"
+    ).all() as Product[];
+  }
+
   addRequirement(requirement: EvidenceRequirement): EvidenceRequirement {
     this.database.prepare(
       "INSERT INTO evidence_requirements (id, product_id, name, required) VALUES (@id, @productId, @name, @required)"
