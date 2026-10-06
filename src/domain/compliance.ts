@@ -21,6 +21,9 @@ export type EvidenceDocument = {
   requirementId: string | null;
   fileName: string;
   documentType: string;
+  storageKey: string;
+  mimeType: string;
+  sizeBytes: number;
   expiresAt: string | null;
   status: EvidenceStatus;
   uploadedAt: string;

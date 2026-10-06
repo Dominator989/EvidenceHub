@@ -30,6 +30,8 @@ The `feature/proofstack-mvp` branch contains the first vertical slice:
 - Compliance calculation based on required, approved, and expiring evidence
 - Browser dashboard for creating products and requirements
 - Product list and health API endpoints
+- Secure local document uploads for PDF, PNG, and JPEG evidence files
+- Download endpoint scoped to the owning product
 - SQLite persistence with foreign-key enforcement
 - Typed Express API with Zod request validation
 - Domain tests and a TypeScript build
@@ -58,9 +60,10 @@ The dashboard is available at `http://localhost:3000`. The database is created
 at `./data/evidencehub.sqlite`.
 
 The current dashboard supports creating products, selecting products, adding
-required evidence, and reviewing the calculated compliance summary. Document
-uploads and authentication are deliberately the next milestones; the current
-API stores document metadata only.
+required evidence, uploading evidence files, and reviewing the calculated
+compliance summary. Uploads are limited to 10 MB and stored outside the public
+directory using generated storage keys. Authentication and organisation-level
+tenant isolation are the next milestones before production use.
 
 ### Example workflow
 

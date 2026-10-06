@@ -57,12 +57,26 @@
         <div class="grid"><div class="metric">Required<strong>${compliance.requiredEvidence}</strong></div><div class="metric">Approved<strong>${compliance.approvedEvidence}</strong></div><div class="metric">Expiring soon<strong>${compliance.expiringEvidence}</strong></div></div>
         <h3>Missing requirements</h3>${compliance.missingRequirements.length ? `<ul>${compliance.missingRequirements.map(escapeHtml).map((x) => `<li>${x}</li>`).join("")}</ul>` : '<p class="muted">All required evidence is approved.</p>'}
         <form id="requirement-form"><h3>Add evidence requirement</h3><label for="requirement-name">Requirement name</label><input id="requirement-name" required placeholder="e.g. Safety certificate"><button>Add requirement</button></form>
+        <form id="document-form"><h3>Upload evidence</h3><label for="document-requirement">Requirement</label><select id="document-requirement"><option value="">Unassigned</option></select><label for="document-type">Document type</label><input id="document-type" required placeholder="e.g. Certificate"><label for="document-expiry">Expiry date</label><input id="document-expiry" type="date"><label for="document-file">File (PDF, PNG, JPEG; max 10 MB)</label><input id="document-file" type="file" accept=".pdf,.png,.jpg,.jpeg" required><button>Upload for review</button></form>
         <p id="notice" class="notice"></p>`;
       el("requirement-form").addEventListener("submit", addRequirement);
+      const requirements = await api(`/api/products/${id}/requirements`);
+      el("document-requirement").innerHTML = '<option value="">Unassigned</option>' + requirements.map((requirement) => `<option value="${requirement.id}">${escapeHtml(requirement.name)}</option>`).join("");
+      el("document-form").addEventListener("submit", uploadDocument);
     }
     async function addRequirement(event) {
       event.preventDefault();
       try { await api(`/api/products/${state.selected.id}/requirements`, { method: "POST", body: JSON.stringify({ name: el("requirement-name").value, required: true }) }); await selectProduct(state.selected.id); }
+      catch (error) { el("notice").textContent = error.message; }
+    }
+    async function uploadDocument(event) {
+      event.preventDefault();
+      const form = new FormData();
+      form.append("file", el("document-file").files[0]);
+      form.append("requirementId", el("document-requirement").value);
+      form.append("documentType", el("document-type").value);
+      if (el("document-expiry").value) form.append("expiresAt", new Date(`${el("document-expiry").value}T00:00:00.000Z`).toISOString());
+      try { await fetch(`/api/products/${state.selected.id}/documents`, { method: "POST", body: form }).then(async (response) => { const body = await response.json(); if (!response.ok) throw new Error(body.error?.message || body.error || "Upload failed"); return body; }); await selectProduct(state.selected.id); }
       catch (error) { el("notice").textContent = error.message; }
     }
     el("product-form").addEventListener("submit", async (event) => {

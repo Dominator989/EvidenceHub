@@ -5,7 +5,7 @@ const product: Product = { id: "product-1", organisationId: "org-1", name: "Widg
 const requirement: EvidenceRequirement = { id: "requirement-1", productId: product.id, name: "Safety certificate", required: true };
 
 function document(status: EvidenceDocument["status"], expiresAt: string | null): EvidenceDocument {
-  return { id: "document-1", productId: product.id, requirementId: requirement.id, fileName: "certificate.pdf", documentType: "certificate", expiresAt, status, uploadedAt: "2026-01-01T00:00:00.000Z" };
+  return { id: "document-1", productId: product.id, requirementId: requirement.id, fileName: "certificate.pdf", documentType: "certificate", storageKey: "certificate.pdf", mimeType: "application/pdf", sizeBytes: 100, expiresAt, status, uploadedAt: "2026-01-01T00:00:00.000Z" };
 }
 
 describe("calculateCompliance", () => {

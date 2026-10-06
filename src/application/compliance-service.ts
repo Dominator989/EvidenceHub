@@ -17,9 +17,18 @@ export class ComplianceService {
     return this.repository.getProducts();
   }
 
+  getDocument(id: string): EvidenceDocument | undefined {
+    return this.repository.getDocument(id);
+  }
+
   addRequirement(productId: string, input: { name: string; required: boolean }): EvidenceRequirement {
     this.assertProduct(productId);
     return this.repository.addRequirement({ id: randomUUID(), productId, ...input });
+  }
+
+  getRequirements(productId: string): EvidenceRequirement[] {
+    this.assertProduct(productId);
+    return this.repository.getRequirements(productId);
   }
 
   addDocument(productId: string, input: Omit<EvidenceDocument, "id" | "productId" | "uploadedAt">): EvidenceDocument {

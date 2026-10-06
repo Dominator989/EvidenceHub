@@ -26,10 +26,18 @@ export function createDatabase(databasePath = process.env.DATABASE_PATH ?? "./da
       requirement_id TEXT REFERENCES evidence_requirements(id) ON DELETE SET NULL,
       file_name TEXT NOT NULL,
       document_type TEXT NOT NULL,
+      storage_key TEXT NOT NULL DEFAULT '',
+      mime_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+      size_bytes INTEGER NOT NULL DEFAULT 0,
       expires_at TEXT,
       status TEXT NOT NULL,
       uploaded_at TEXT NOT NULL
     );
   `);
+  const columns = database.prepare("PRAGMA table_info(evidence_documents)").all() as Array<{ name: string }>;
+  const columnNames = new Set(columns.map((column) => column.name));
+  if (!columnNames.has("storage_key")) database.exec("ALTER TABLE evidence_documents ADD COLUMN storage_key TEXT NOT NULL DEFAULT ''");
+  if (!columnNames.has("mime_type")) database.exec("ALTER TABLE evidence_documents ADD COLUMN mime_type TEXT NOT NULL DEFAULT 'application/octet-stream'");
+  if (!columnNames.has("size_bytes")) database.exec("ALTER TABLE evidence_documents ADD COLUMN size_bytes INTEGER NOT NULL DEFAULT 0");
   return database;
 }

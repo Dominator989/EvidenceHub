@@ -38,15 +38,21 @@ export class ComplianceRepository {
   addDocument(document: EvidenceDocument): EvidenceDocument {
     this.database.prepare(
       `INSERT INTO evidence_documents
-        (id, product_id, requirement_id, file_name, document_type, expires_at, status, uploaded_at)
-       VALUES (@id, @productId, @requirementId, @fileName, @documentType, @expiresAt, @status, @uploadedAt)`
+        (id, product_id, requirement_id, file_name, document_type, storage_key, mime_type, size_bytes, expires_at, status, uploaded_at)
+       VALUES (@id, @productId, @requirementId, @fileName, @documentType, @storageKey, @mimeType, @sizeBytes, @expiresAt, @status, @uploadedAt)`
     ).run(document);
     return document;
   }
 
   getDocuments(productId: string): EvidenceDocument[] {
     return this.database.prepare(
-      "SELECT id, product_id as productId, requirement_id as requirementId, file_name as fileName, document_type as documentType, expires_at as expiresAt, status, uploaded_at as uploadedAt FROM evidence_documents WHERE product_id = ?"
+      "SELECT id, product_id as productId, requirement_id as requirementId, file_name as fileName, document_type as documentType, storage_key as storageKey, mime_type as mimeType, size_bytes as sizeBytes, expires_at as expiresAt, status, uploaded_at as uploadedAt FROM evidence_documents WHERE product_id = ?"
     ).all(productId) as EvidenceDocument[];
+  }
+
+  getDocument(id: string): EvidenceDocument | undefined {
+    return this.database.prepare(
+      "SELECT id, product_id as productId, requirement_id as requirementId, file_name as fileName, document_type as documentType, storage_key as storageKey, mime_type as mimeType, size_bytes as sizeBytes, expires_at as expiresAt, status, uploaded_at as uploadedAt FROM evidence_documents WHERE id = ?"
+    ).get(id) as EvidenceDocument | undefined;
   }
 }
