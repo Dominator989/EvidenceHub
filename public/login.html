@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in - EvidenceHub</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #172033; background: #f4f7fb; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; } main { width: min(420px, calc(100% - 40px)); background: white; padding: 30px; border: 1px solid #dce4ef; border-radius: 14px; }
+    h1 { color: #267a60; } label { display: block; font-weight: 700; font-size: 13px; margin: 14px 0 6px; } input, button { width: 100%; padding: 11px; border: 1px solid #c7d3e3; border-radius: 8px; font: inherit; box-sizing: border-box; } button { margin-top: 18px; background: #267a60; color: white; border: 0; font-weight: 700; cursor: pointer; } .hidden { display: none; } .error { color: #9b3030; min-height: 20px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>EvidenceHub</h1>
+    <p>Sign in to manage your compliance evidence.</p>
+    <form id="login-form">
+      <label for="email">Email</label><input id="email" type="email" required autocomplete="email">
+      <label for="password">Password</label><input id="password" type="password" required autocomplete="current-password">
+      <button>Sign in</button>
+      <p id="login-error" class="error"></p>
+    </form>
+    <hr>
+    <p>New organisation? <a href="#" id="show-register">Create an account</a></p>
+    <form id="register-form" class="hidden">
+      <label for="organisation">Organisation name</label><input id="organisation" required>
+      <label for="register-email">Email</label><input id="register-email" type="email" required>
+      <label for="register-password">Password (12+ characters)</label><input id="register-password" type="password" minlength="12" required>
+      <button>Create account</button>
+    </form>
+  </main>
+  <script>
+    const loginForm = document.getElementById("login-form");
+    const registerForm = document.getElementById("register-form");
+    const error = document.getElementById("login-error");
+    document.getElementById("show-register").addEventListener("click", (event) => { event.preventDefault(); registerForm.classList.toggle("hidden"); });
+    async function submit(path, body) {
+      const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error?.message || result.error || "Request failed");
+    }
+    loginForm.addEventListener("submit", async (event) => { event.preventDefault(); error.textContent = ""; try { await submit("/api/auth/login", { email: document.getElementById("email").value, password: document.getElementById("password").value }); location.href = "/dashboard.html"; } catch (e) { error.textContent = e.message; } });
+    registerForm.addEventListener("submit", async (event) => { event.preventDefault(); error.textContent = ""; try { await submit("/api/auth/register", { organisationName: document.getElementById("organisation").value, email: document.getElementById("register-email").value, password: document.getElementById("register-password").value }); location.href = "/dashboard.html"; } catch (e) { error.textContent = e.message; } });
+  </script>
+</body>
+</html>

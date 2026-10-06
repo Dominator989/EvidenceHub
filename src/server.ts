@@ -5,13 +5,17 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { ComplianceService } from "./application/compliance-service.js";
+import { AuthService } from "./application/auth-service.js";
 import { createDatabase } from "./infrastructure/database.js";
 import { ComplianceRepository } from "./infrastructure/compliance-repository.js";
+import { AuthRepository } from "./infrastructure/auth-repository.js";
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(process.cwd(), "public")));
-const service = new ComplianceService(new ComplianceRepository(createDatabase()));
+const database = createDatabase();
+const service = new ComplianceService(new ComplianceRepository(database));
+const auth = new AuthService(new AuthRepository(database));
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -23,11 +27,64 @@ const upload = multer({
 const uploadDirectory = path.join(process.cwd(), "data", "uploads");
 
 app.get("/", (_request, response) => {
-  response.redirect("/dashboard.html");
+  response.redirect("/login.html");
 });
 
 app.get("/api/health", (_request, response) => {
   response.json({ status: "ok", service: "evidencehub" });
+});
+
+function sessionToken(request: express.Request): string | undefined {
+  const value = request.headers.cookie?.split(";").map((part) => part.trim()).find((part) => part.startsWith("evidencehub_session="));
+  return value?.slice("evidencehub_session=".length);
+}
+
+function requireUser(request: express.Request, response: express.Response): ReturnType<AuthService["authenticate"]> | undefined {
+  const token = sessionToken(request);
+  const user = auth.authenticate(token);
+  if (!user) {
+    response.status(401).json({ error: "Authentication required" });
+    return undefined;
+  }
+  return user;
+}
+
+const registerSchema = z.object({ organisationName: z.string().min(1), email: z.string().email(), password: z.string().min(12) });
+const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1) });
+
+app.post("/api/auth/register", (request, response) => {
+  const result = registerSchema.safeParse(request.body);
+  if (!result.success) return response.status(400).json({ error: result.error.flatten() });
+  try {
+    const session = auth.register(result.data);
+    response.setHeader("Set-Cookie", [`evidencehub_session=${session.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`]);
+    return response.status(201).json(session.user);
+  } catch (error) {
+    return response.status(409).json({ error: error instanceof Error ? error.message : "Registration failed" });
+  }
+});
+
+app.post("/api/auth/login", (request, response) => {
+  const result = loginSchema.safeParse(request.body);
+  if (!result.success) return response.status(400).json({ error: result.error.flatten() });
+  try {
+    const session = auth.login(result.data);
+    response.setHeader("Set-Cookie", [`evidencehub_session=${session.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`]);
+    return response.json(session.user);
+  } catch {
+    return response.status(401).json({ error: "Invalid email or password" });
+  }
+});
+
+app.post("/api/auth/logout", (request, response) => {
+  auth.logout(sessionToken(request));
+  response.setHeader("Set-Cookie", ["evidencehub_session=; HttpOnly; SameSite=Lax; Max-Age=0"]);
+  return response.status(204).send();
+});
+
+app.get("/api/auth/me", (request, response) => {
+  const user = requireUser(request, response);
+  return user ? response.json(user) : undefined;
 });
 
 const productSchema = z.object({
@@ -44,34 +101,43 @@ const documentSchema = z.object({
 });
 
 app.post("/api/products", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
   const result = productSchema.safeParse(request.body);
   if (!result.success) return response.status(400).json({ error: result.error.flatten() });
-  return response.status(201).json(service.createProduct(result.data));
+  return response.status(201).json(service.createProduct({ ...result.data, organisationId: user.organisationId }));
 });
 
-app.get("/api/products", (_request, response) => {
-  return response.json(service.getProducts());
+app.get("/api/products", (request, response) => {
+  const user = requireUser(request, response);
+  return user ? response.json(service.getProducts(user.organisationId)) : undefined;
 });
 
 app.post("/api/products/:productId/requirements", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
   const result = requirementSchema.safeParse(request.body);
   if (!result.success) return response.status(400).json({ error: result.error.flatten() });
   try {
-    return response.status(201).json(service.addRequirement(request.params.productId, result.data));
+    return response.status(201).json(service.addRequirement(request.params.productId, result.data, user.organisationId));
   } catch (error) {
     return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
   }
 });
 
 app.get("/api/products/:productId/requirements", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
   try {
-    return response.json(service.getRequirements(request.params.productId));
+    return response.json(service.getRequirements(request.params.productId, user.organisationId));
   } catch (error) {
     return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
   }
 });
 
 app.post("/api/products/:productId/documents", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
   upload.single("file")(request, response, async (uploadError) => {
     if (uploadError instanceof multer.MulterError && uploadError.code === "LIMIT_FILE_SIZE") {
       return response.status(413).json({ error: "Files must be 10 MB or smaller" });
@@ -96,7 +162,7 @@ app.post("/api/products/:productId/documents", (request, response) => {
         storageKey,
         mimeType: request.file.mimetype,
         sizeBytes: request.file.size
-      });
+      }, user.organisationId);
       return response.status(201).json(document);
     } catch (error) {
       await unlink(storagePath).catch(() => undefined);
@@ -107,8 +173,11 @@ app.post("/api/products/:productId/documents", (request, response) => {
 });
 
 app.get("/api/products/:productId/documents/:documentId/download", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
   const document = service.getDocument(request.params.documentId);
-  if (!document || document.productId !== request.params.productId || !document.storageKey) {
+  const product = service.getProducts(user.organisationId).find((item) => item.id === request.params.productId);
+  if (!product || !document || document.productId !== request.params.productId || !document.storageKey) {
     return response.status(404).json({ error: "Document not found" });
   }
   const storagePath = path.resolve(uploadDirectory, document.storageKey);
@@ -119,8 +188,10 @@ app.get("/api/products/:productId/documents/:documentId/download", (request, res
 });
 
 app.get("/api/products/:productId/compliance", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
   try {
-    return response.json(service.getCompliance(request.params.productId));
+    return response.json(service.getCompliance(request.params.productId, user.organisationId));
   } catch (error) {
     return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
   }

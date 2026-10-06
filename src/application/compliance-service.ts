@@ -13,36 +13,36 @@ export class ComplianceService {
     });
   }
 
-  getProducts(): Product[] {
-    return this.repository.getProducts();
+  getProducts(organisationId?: string): Product[] {
+    return this.repository.getProducts(organisationId);
   }
 
   getDocument(id: string): EvidenceDocument | undefined {
     return this.repository.getDocument(id);
   }
 
-  addRequirement(productId: string, input: { name: string; required: boolean }): EvidenceRequirement {
-    this.assertProduct(productId);
+  addRequirement(productId: string, input: { name: string; required: boolean }, organisationId?: string): EvidenceRequirement {
+    this.assertProduct(productId, organisationId);
     return this.repository.addRequirement({ id: randomUUID(), productId, ...input });
   }
 
-  getRequirements(productId: string): EvidenceRequirement[] {
-    this.assertProduct(productId);
+  getRequirements(productId: string, organisationId?: string): EvidenceRequirement[] {
+    this.assertProduct(productId, organisationId);
     return this.repository.getRequirements(productId);
   }
 
-  addDocument(productId: string, input: Omit<EvidenceDocument, "id" | "productId" | "uploadedAt">): EvidenceDocument {
-    this.assertProduct(productId);
+  addDocument(productId: string, input: Omit<EvidenceDocument, "id" | "productId" | "uploadedAt">, organisationId?: string): EvidenceDocument {
+    this.assertProduct(productId, organisationId);
     return this.repository.addDocument({ id: randomUUID(), productId, uploadedAt: new Date().toISOString(), ...input });
   }
 
-  getCompliance(productId: string) {
-    const product = this.assertProduct(productId);
+  getCompliance(productId: string, organisationId?: string) {
+    const product = this.assertProduct(productId, organisationId);
     return calculateCompliance(product, this.repository.getRequirements(productId), this.repository.getDocuments(productId));
   }
 
-  private assertProduct(productId: string): Product {
-    const product = this.repository.getProduct(productId);
+  private assertProduct(productId: string, organisationId?: string): Product {
+    const product = this.repository.getProduct(productId, organisationId);
     if (!product) throw new Error(`Product '${productId}' was not found`);
     return product;
   }

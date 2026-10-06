@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-  <header><h1>EvidenceHub</h1><p>Evidence inventory and compliance workspace</p></header>
+  <header><h1>EvidenceHub</h1><p>Evidence inventory and compliance workspace</p><button id="logout" style="max-width:120px;background:#52647e">Sign out</button></header>
   <main>
     <aside>
       <h2>Products</h2>
@@ -85,7 +85,8 @@
       catch (error) { alert(error.message); }
     });
     function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
-    loadProducts().catch((error) => { el("products").textContent = error.message; });
+    document.getElementById("logout").addEventListener("click", async () => { await fetch("/api/auth/logout", { method: "POST" }); location.href = "/login.html"; });
+    loadProducts().catch((error) => { if (error.message === "Authentication required") location.href = "/login.html"; else el("products").textContent = error.message; });
   </script>
 </body>
 </html>

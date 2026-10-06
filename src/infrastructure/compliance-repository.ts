@@ -11,15 +11,15 @@ export class ComplianceRepository {
     return product;
   }
 
-  getProduct(id: string): Product | undefined {
-    const row = this.database.prepare("SELECT id, organisation_id as organisationId, name, sku, created_at as createdAt FROM products WHERE id = ?").get(id);
+  getProduct(id: string, organisationId?: string): Product | undefined {
+    const row = this.database.prepare("SELECT id, organisation_id as organisationId, name, sku, created_at as createdAt FROM products WHERE id = @id AND (@organisationId IS NULL OR organisation_id = @organisationId)").get({ id, organisationId: organisationId ?? null });
     return row as Product | undefined;
   }
 
-  getProducts(): Product[] {
+  getProducts(organisationId?: string): Product[] {
     return this.database.prepare(
-      "SELECT id, organisation_id as organisationId, name, sku, created_at as createdAt FROM products ORDER BY created_at DESC"
-    ).all() as Product[];
+      "SELECT id, organisation_id as organisationId, name, sku, created_at as createdAt FROM products WHERE (@organisationId IS NULL OR organisation_id = @organisationId) ORDER BY created_at DESC"
+    ).all({ organisationId: organisationId ?? null }) as Product[];
   }
 
   addRequirement(requirement: EvidenceRequirement): EvidenceRequirement {
