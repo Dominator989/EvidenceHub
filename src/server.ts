@@ -1,6 +1,7 @@
 import express from "express";
+import archiver = require("archiver");
 import multer from "multer";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -267,6 +268,42 @@ app.get("/api/products/:productId/compliance", (request, response) => {
     return response.json(service.getCompliance(request.params.productId, user.organisationId));
   } catch (error) {
     return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
+  }
+});
+
+app.get("/api/products/:productId/evidence-pack", async (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
+
+  try {
+    const pack = service.getEvidencePack(request.params.productId, user.organisationId);
+    const archive = new archiver.ZipArchive({ zlib: { level: 9 } });
+    const safeProductName = pack.product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "product";
+    const manifest = {
+      generatedAt: new Date().toISOString(),
+      product: pack.product,
+      compliance: pack.compliance,
+      requirements: pack.requirements,
+      documents: pack.documents.map(({ storageKey: _storageKey, ...document }) => document)
+    };
+
+    response.attachment(`${safeProductName}-evidence-pack.zip`);
+    archive.on("error", (error: Error) => response.destroy(error));
+    archive.pipe(response);
+    archive.append(JSON.stringify(manifest, null, 2), { name: "manifest.json" });
+
+    for (const document of pack.documents) {
+      const storagePath = path.resolve(uploadDirectory, document.storageKey);
+      if (path.dirname(storagePath) !== path.resolve(uploadDirectory)) {
+        throw new Error("Document not found");
+      }
+      archive.append(await readFile(storagePath), { name: `evidence/${document.fileName}` });
+    }
+
+    await archive.finalize();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Evidence pack export failed";
+    if (!response.headersSent) response.status(message.includes("was not found") || message === "Document not found" ? 404 : 500).json({ error: message });
   }
 });
 

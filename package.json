@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "archiver": "^8.0.0",
     "better-sqlite3": "^11.7.0",
     "express": "^5.1.0",
     "multer": "^2.0.0",
@@ -19,6 +20,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/archiver": "^8.0.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/express": "^5.0.0",
     "@types/multer": "^2.0.0",

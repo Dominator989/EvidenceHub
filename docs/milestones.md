@@ -37,6 +37,13 @@ history may be rebased while the project is still in early development.
 - Added Tesseract OCR for PNG and JPEG uploads
 - Added safe manual-review fallback for PDF uploads
 - Added explicit metadata confirmation before extracted values are trusted
+
+## Evidence pack milestone
+
+- Added a tenant-scoped ZIP export for each product
+- Included compliance status, requirements, document metadata, and review history
+- Included the original uploaded evidence files in the exported pack
+- Added a dashboard action and automated endpoint coverage
 - Added extraction review endpoints and dashboard controls
 
 ## Validation standard

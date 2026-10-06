@@ -64,6 +64,27 @@ describe("server", () => {
     expect(download.body.toString()).toBe("test evidence");
   });
 
+  it("exports an evidence pack for the selected product", async () => {
+    const agent = await authenticatedAgent("export");
+    const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Export test", sku: `EXPORT-${Date.now()}` });
+    expect(product.status).toBe(201);
+    const upload = await agent
+      .post(`/api/products/${product.body.id}/documents`)
+      .field("documentType", "Certificate")
+      .attach("file", Buffer.from("export evidence"), "certificate.pdf");
+    expect(upload.status).toBe(201);
+
+    const pack = await agent.get(`/api/products/${product.body.id}/evidence-pack`).buffer(true).parse((response, callback) => {
+      const chunks: Buffer[] = [];
+      response.on("data", (chunk: Buffer) => chunks.push(chunk));
+      response.on("end", () => callback(null, Buffer.concat(chunks)));
+    });
+    expect(pack.status).toBe(200);
+    expect(pack.headers["content-type"]).toContain("application/zip");
+    expect(pack.headers["content-disposition"]).toContain("export-test-evidence-pack.zip");
+    expect(pack.body.length).toBeGreaterThan(0);
+  });
+
   it("records review decisions and requires notes for negative decisions", async () => {
     const agent = await authenticatedAgent("review");
     const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Review test", sku: `REVIEW-${Date.now()}` });

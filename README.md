@@ -37,6 +37,7 @@ The `feature/proofstack-mvp` branch contains the first vertical slice:
 - Evidence review queue with approve, reject, and request-changes actions
 - Immutable review audit events with reviewer and timestamp metadata
 - Reviewable OCR metadata extraction for image evidence
+- Downloadable product evidence packs with compliance manifest and source files
 - SQLite persistence with foreign-key enforcement
 - Typed Express API with Zod request validation
 - Domain tests and a TypeScript build
@@ -84,6 +85,11 @@ metadata without creating duplicate records.
 
 The dashboard is available at `http://localhost:3000`. The database is created
 at `./data/evidencehub.sqlite`.
+
+From a selected product, use **Download evidence pack** to export a ZIP
+containing the compliance summary, requirements, review history, and uploaded
+evidence files. The export is protected by the same organisation-level access
+control as the dashboard.
 
 The current dashboard supports creating products, selecting products, adding
 required evidence, uploading evidence files, reviewing evidence, and reviewing

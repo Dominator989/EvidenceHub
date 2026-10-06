@@ -17,6 +17,22 @@ export class ComplianceService {
     return this.repository.getProducts(organisationId);
   }
 
+  getEvidencePack(productId: string, organisationId: string) {
+    const product = this.assertProduct(productId, organisationId);
+    const requirements = this.repository.getRequirements(productId);
+    const documents = this.repository.getDocuments(productId);
+
+    return {
+      product,
+      compliance: calculateCompliance(product, requirements, documents),
+      requirements,
+      documents: documents.map((document) => ({
+        ...document,
+        auditEvents: this.repository.getAuditEvents(document.id, organisationId)
+      }))
+    };
+  }
+
   getDocument(id: string): EvidenceDocument | undefined {
     return this.repository.getDocument(id);
   }
