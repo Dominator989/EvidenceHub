@@ -60,6 +60,21 @@ export function createDatabase(databasePath = process.env.DATABASE_PATH ?? "./da
       note TEXT,
       created_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS evidence_extractions (
+      id TEXT PRIMARY KEY,
+      document_id TEXT NOT NULL UNIQUE REFERENCES evidence_documents(id) ON DELETE CASCADE,
+      organisation_id TEXT NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+      status TEXT NOT NULL,
+      extracted_text TEXT,
+      suggested_document_type TEXT,
+      suggested_expires_at TEXT,
+      confidence REAL,
+      error_message TEXT,
+      confirmed_at TEXT,
+      confirmed_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
   `);
   const columns = database.prepare("PRAGMA table_info(evidence_documents)").all() as Array<{ name: string }>;
   const columnNames = new Set(columns.map((column) => column.name));

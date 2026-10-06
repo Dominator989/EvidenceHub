@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import type { EvidenceAuditEvent, EvidenceDocument, EvidenceRequirement, EvidenceStatus, Product } from "../domain/compliance.js";
+import type { EvidenceAuditEvent, EvidenceDocument, EvidenceExtraction, EvidenceRequirement, EvidenceStatus, Product } from "../domain/compliance.js";
 
 export class ComplianceRepository {
   constructor(private readonly database: Database.Database) {}
@@ -77,5 +77,42 @@ export class ComplianceRepository {
        WHERE document_id = ? AND organisation_id = ?
        ORDER BY created_at DESC`
     ).all(documentId, organisationId) as EvidenceAuditEvent[];
+  }
+
+  saveExtraction(extraction: EvidenceExtraction): EvidenceExtraction {
+    this.database.prepare(
+      `INSERT INTO evidence_extractions
+        (id, document_id, organisation_id, status, extracted_text, suggested_document_type,
+         suggested_expires_at, confidence, error_message, confirmed_at, confirmed_by_user_id,
+         created_at, updated_at)
+       VALUES (@id, @documentId, @organisationId, @status, @extractedText, @suggestedDocumentType,
+         @suggestedExpiresAt, @confidence, @errorMessage, @confirmedAt, @confirmedByUserId,
+         @createdAt, @updatedAt)
+       ON CONFLICT(document_id) DO UPDATE SET
+         status = excluded.status, extracted_text = excluded.extracted_text,
+         suggested_document_type = excluded.suggested_document_type,
+         suggested_expires_at = excluded.suggested_expires_at, confidence = excluded.confidence,
+         error_message = excluded.error_message, updated_at = excluded.updated_at`
+    ).run(extraction);
+    return extraction;
+  }
+
+  getExtraction(documentId: string, organisationId: string): EvidenceExtraction | undefined {
+    return this.database.prepare(
+      `SELECT id, document_id as documentId, organisation_id as organisationId, status,
+        extracted_text as extractedText, suggested_document_type as suggestedDocumentType,
+        suggested_expires_at as suggestedExpiresAt, confidence, error_message as errorMessage,
+        confirmed_at as confirmedAt, confirmed_by_user_id as confirmedByUserId,
+        created_at as createdAt, updated_at as updatedAt
+       FROM evidence_extractions WHERE document_id = ? AND organisation_id = ?`
+    ).get(documentId, organisationId) as EvidenceExtraction | undefined;
+  }
+
+  confirmExtraction(documentId: string, organisationId: string, userId: string, documentType: string, expiresAt: string | null, now: string): void {
+    const update = this.database.transaction(() => {
+      this.database.prepare("UPDATE evidence_documents SET document_type = ?, expires_at = ? WHERE id = (SELECT id FROM evidence_documents WHERE id = ? AND product_id IN (SELECT id FROM products WHERE organisation_id = ?))").run(documentType, expiresAt, documentId, organisationId);
+      this.database.prepare("UPDATE evidence_extractions SET status = 'confirmed', confirmed_at = ?, confirmed_by_user_id = ?, updated_at = ? WHERE document_id = ? AND organisation_id = ?").run(now, userId, now, documentId, organisationId);
+    });
+    update();
   }
 }

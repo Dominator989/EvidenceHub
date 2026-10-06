@@ -9,6 +9,7 @@ import { AuthService } from "./application/auth-service.js";
 import { createDatabase } from "./infrastructure/database.js";
 import { ComplianceRepository } from "./infrastructure/compliance-repository.js";
 import { AuthRepository } from "./infrastructure/auth-repository.js";
+import { OcrService, TesseractOcrEngine } from "./application/ocr-service.js";
 
 const app = express();
 app.use(express.json());
@@ -16,6 +17,7 @@ app.use(express.static(path.join(process.cwd(), "public")));
 const database = createDatabase();
 const service = new ComplianceService(new ComplianceRepository(database));
 const auth = new AuthService(new AuthRepository(database));
+const ocr = new OcrService(new ComplianceRepository(database), new TesseractOcrEngine());
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -103,6 +105,10 @@ const reviewSchema = z.object({
   action: z.enum(["approved", "rejected", "changes_requested"]),
   note: z.string().nullable().default(null)
 });
+const extractionConfirmationSchema = z.object({
+  documentType: z.string().min(1),
+  expiresAt: z.string().datetime().nullable()
+});
 
 app.post("/api/products", (request, response) => {
   const user = requireUser(request, response);
@@ -177,11 +183,37 @@ app.post("/api/products/:productId/documents", (request, response) => {
         mimeType: request.file.mimetype,
         sizeBytes: request.file.size
       }, user.organisationId);
+      await ocr.process(document.id, user.organisationId, request.file.buffer, request.file.mimetype);
       return response.status(201).json(document);
     } catch (error) {
       await unlink(storagePath).catch(() => undefined);
       const message = error instanceof Error ? error.message : "Document upload failed";
       return response.status(message.startsWith("Product '") ? 404 : 500).json({ error: message });
+    }
+  });
+
+  app.get("/api/products/:productId/documents/:documentId/extraction", (request, response) => {
+    const user = requireUser(request, response);
+    if (!user) return;
+    try {
+      service.getDocuments(request.params.productId, user.organisationId);
+      const extraction = ocr.get(request.params.documentId, user.organisationId);
+      return extraction ? response.json(extraction) : response.status(404).json({ error: "Extraction not found" });
+    } catch (error) {
+      return response.status(404).json({ error: error instanceof Error ? error.message : "Document not found" });
+    }
+  });
+
+  app.post("/api/products/:productId/documents/:documentId/extraction/confirm", (request, response) => {
+    const user = requireUser(request, response);
+    if (!user) return;
+    const result = extractionConfirmationSchema.safeParse(request.body);
+    if (!result.success) return response.status(400).json({ error: result.error.flatten() });
+    try {
+      service.getDocuments(request.params.productId, user.organisationId);
+      return response.json(ocr.confirm(request.params.documentId, user.organisationId, user.id, result.data));
+    } catch (error) {
+      return response.status(404).json({ error: error instanceof Error ? error.message : "Extraction not found" });
     }
   });
 });

@@ -31,6 +31,24 @@ export type EvidenceDocument = {
 
 export type EvidenceReviewAction = "approved" | "rejected" | "changes_requested";
 
+export type ExtractionStatus = "pending" | "ready_for_review" | "confirmed" | "manual_required" | "failed";
+
+export type EvidenceExtraction = {
+  id: string;
+  documentId: string;
+  organisationId: string;
+  status: ExtractionStatus;
+  extractedText: string | null;
+  suggestedDocumentType: string | null;
+  suggestedExpiresAt: string | null;
+  confidence: number | null;
+  errorMessage: string | null;
+  confirmedAt: string | null;
+  confirmedByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type EvidenceAuditEvent = {
   id: string;
   documentId: string;
