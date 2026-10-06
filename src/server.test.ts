@@ -104,6 +104,27 @@ describe("server", () => {
     expect(renewals.body[0].document).toMatchObject({ id: upload.body.id, status: "approved" });
   });
 
+  it("records a local renewal reminder and its history", async () => {
+    const agent = await authenticatedAgent("reminders");
+    const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Reminder test", sku: `REMINDER-${Date.now()}` });
+    const upload = await agent
+      .post(`/api/products/${product.body.id}/documents`)
+      .field("documentType", "Insurance certificate")
+      .field("expiresAt", new Date(Date.now() + 7 * 86_400_000).toISOString())
+      .attach("file", Buffer.from("reminder evidence"), "insurance.pdf");
+    expect(upload.status).toBe(201);
+    await agent.post(`/api/products/${product.body.id}/documents/${upload.body.id}/review`).send({ action: "approved" });
+
+    const reminder = await agent.post(`/api/products/${product.body.id}/documents/${upload.body.id}/reminders`);
+    expect(reminder.status).toBe(201);
+    expect(reminder.body).toMatchObject({ documentId: upload.body.id, recipient: expect.stringContaining("@example.com"), channel: "local_log" });
+
+    const history = await agent.get(`/api/products/${product.body.id}/documents/${upload.body.id}/reminders`);
+    expect(history.status).toBe(200);
+    expect(history.body).toHaveLength(1);
+    expect(history.body[0].id).toBe(reminder.body.id);
+  });
+
   it("records review decisions and requires notes for negative decisions", async () => {
     const agent = await authenticatedAgent("review");
     const product = await agent.post("/api/products").send({ organisationId: "ignored", name: "Review test", sku: `REVIEW-${Date.now()}` });

@@ -51,6 +51,13 @@ history may be rebased while the project is still in early development.
 - Included expired and upcoming evidence with days-until-expiry details
 - Added 30, 60, and 90-day dashboard filters
 - Added automated coverage for renewal eligibility and access control
+
+## Reminder history milestone
+
+- Added persisted reminder events with recipient and delivery channel metadata
+- Added local reminder delivery abstraction for development and testing
+- Added reminder history and record-reminder API endpoints
+- Added a dashboard action for recording a reminder from the renewal queue
 - Added extraction review endpoints and dashboard controls
 
 ## Validation standard

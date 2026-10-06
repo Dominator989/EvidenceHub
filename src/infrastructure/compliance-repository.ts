@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import type { EvidenceAuditEvent, EvidenceDocument, EvidenceExtraction, EvidenceRequirement, EvidenceStatus, Product } from "../domain/compliance.js";
+import type { EvidenceAuditEvent, EvidenceDocument, EvidenceExtraction, EvidenceRequirement, EvidenceStatus, Product, ReminderEvent } from "../domain/compliance.js";
 
 export class ComplianceRepository {
   constructor(private readonly database: Database.Database) {}
@@ -77,6 +77,25 @@ export class ComplianceRepository {
        WHERE document_id = ? AND organisation_id = ?
        ORDER BY created_at DESC`
     ).all(documentId, organisationId) as EvidenceAuditEvent[];
+  }
+
+  addReminderEvent(event: ReminderEvent): ReminderEvent {
+    this.database.prepare(
+      `INSERT INTO reminder_events
+        (id, organisation_id, product_id, document_id, recipient, channel, sent_at)
+       VALUES (@id, @organisationId, @productId, @documentId, @recipient, @channel, @sentAt)`
+    ).run(event);
+    return event;
+  }
+
+  getReminderEvents(documentId: string, organisationId: string): ReminderEvent[] {
+    return this.database.prepare(
+      `SELECT id, organisation_id as organisationId, product_id as productId,
+        document_id as documentId, recipient, channel, sent_at as sentAt
+       FROM reminder_events
+       WHERE document_id = ? AND organisation_id = ?
+       ORDER BY sent_at DESC`
+    ).all(documentId, organisationId) as ReminderEvent[];
   }
 
   saveExtraction(extraction: EvidenceExtraction): EvidenceExtraction {

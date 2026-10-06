@@ -11,6 +11,7 @@ import { createDatabase } from "./infrastructure/database.js";
 import { ComplianceRepository } from "./infrastructure/compliance-repository.js";
 import { AuthRepository } from "./infrastructure/auth-repository.js";
 import { OcrService, TesseractOcrEngine } from "./application/ocr-service.js";
+import { LocalReminderDelivery, ReminderService } from "./application/reminder-service.js";
 
 const app = express();
 app.use(express.json());
@@ -19,6 +20,7 @@ const database = createDatabase();
 const service = new ComplianceService(new ComplianceRepository(database));
 const auth = new AuthService(new AuthRepository(database));
 const ocr = new OcrService(new ComplianceRepository(database), new TesseractOcrEngine());
+const reminders = new ReminderService(new ComplianceRepository(database), new LocalReminderDelivery());
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -282,6 +284,27 @@ app.get("/api/products/:productId/renewals", (request, response) => {
     return response.json(service.getRenewalQueue(request.params.productId, user.organisationId, days));
   } catch (error) {
     return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
+  }
+});
+
+app.post("/api/products/:productId/documents/:documentId/reminders", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
+  try {
+    return response.status(201).json(reminders.sendRenewalReminder(request.params.productId, request.params.documentId, user.organisationId, user.email));
+  } catch (error) {
+    return response.status(400).json({ error: error instanceof Error ? error.message : "Reminder delivery failed" });
+  }
+});
+
+app.get("/api/products/:productId/documents/:documentId/reminders", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
+  try {
+    service.getDocuments(request.params.productId, user.organisationId);
+    return response.json(reminders.getReminderEvents(request.params.documentId, user.organisationId));
+  } catch (error) {
+    return response.status(404).json({ error: error instanceof Error ? error.message : "Evidence document not found" });
   }
 });
 

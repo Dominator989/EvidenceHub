@@ -59,6 +59,16 @@ export type EvidenceAuditEvent = {
   createdAt: string;
 };
 
+export type ReminderEvent = {
+  id: string;
+  organisationId: string;
+  productId: string;
+  documentId: string;
+  recipient: string;
+  channel: "local_log";
+  sentAt: string;
+};
+
 export type ComplianceSummary = {
   productId: string;
   status: "compliant" | "action_required" | "incomplete";

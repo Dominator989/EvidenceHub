@@ -39,6 +39,7 @@ The `feature/proofstack-mvp` branch contains the first vertical slice:
 - Reviewable OCR metadata extraction for image evidence
 - Downloadable product evidence packs with compliance manifest and source files
 - Renewal queue for approved evidence that is expired or expiring soon
+- Local reminder event history with a provider-ready delivery boundary
 - SQLite persistence with foreign-key enforcement
 - Typed Express API with Zod request validation
 - Domain tests and a TypeScript build
@@ -94,7 +95,9 @@ control as the dashboard.
 
 The dashboard also includes a renewal queue with selectable 30, 60, and
 90-day windows. It currently identifies approved evidence that needs attention;
-email delivery and reminder history are planned follow-up work.
+users can record a local reminder event against the document. The current
+delivery channel is intentionally local; email delivery can be added behind the
+same application boundary later.
 
 The current dashboard supports creating products, selecting products, adding
 required evidence, uploading evidence files, reviewing evidence, and reviewing

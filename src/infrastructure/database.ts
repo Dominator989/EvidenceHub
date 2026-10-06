@@ -75,6 +75,15 @@ export function createDatabase(databasePath = process.env.DATABASE_PATH ?? "./da
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS reminder_events (
+      id TEXT PRIMARY KEY,
+      organisation_id TEXT NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+      product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      document_id TEXT NOT NULL REFERENCES evidence_documents(id) ON DELETE CASCADE,
+      recipient TEXT NOT NULL,
+      channel TEXT NOT NULL,
+      sent_at TEXT NOT NULL
+    );
   `);
   const columns = database.prepare("PRAGMA table_info(evidence_documents)").all() as Array<{ name: string }>;
   const columnNames = new Set(columns.map((column) => column.name));
