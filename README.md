@@ -79,6 +79,8 @@ Password: DemoPassword123!
 
 The demo account and its sample data are intended for local development only.
 The seed command is explicit and is never run automatically by the application.
+Running it again repairs the generated sample PDF and updates its stored file
+metadata without creating duplicate records.
 
 The dashboard is available at `http://localhost:3000`. The database is created
 at `./data/evidencehub.sqlite`.
