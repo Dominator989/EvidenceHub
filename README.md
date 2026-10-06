@@ -32,6 +32,8 @@ The `feature/proofstack-mvp` branch contains the first vertical slice:
 - Product list and health API endpoints
 - Secure local document uploads for PDF, PNG, and JPEG evidence files
 - Download endpoint scoped to the owning product
+- Organisation registration, login, logout, and session-based access control
+- Tenant isolation for product and document workflows
 - SQLite persistence with foreign-key enforcement
 - Typed Express API with Zod request validation
 - Domain tests and a TypeScript build
@@ -63,7 +65,9 @@ The current dashboard supports creating products, selecting products, adding
 required evidence, uploading evidence files, and reviewing the calculated
 compliance summary. Uploads are limited to 10 MB and stored outside the public
 directory using generated storage keys. Authentication and organisation-level
-tenant isolation are the next milestones before production use.
+tenant isolation are implemented for the development workflow. Before
+production use, add rate limiting, email verification, password reset, CSRF
+protection, database backups, and managed object storage.
 
 ### Example workflow
 
