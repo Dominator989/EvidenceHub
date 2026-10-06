@@ -23,6 +23,14 @@ history may be rebased while the project is still in early development.
 - Protected product and document routes, added login and
   registration pages, and enforced organisation-level isolation
 
+## Evidence review milestone
+
+- Added an immutable audit event model for evidence decisions
+- Added approve, reject, and request-changes actions
+- Required reviewer notes for negative decisions
+- Added a browser review queue with status and expiry details
+- Added tenant-scoped audit history endpoints
+
 ## Validation standard
 
 Each implementation milestone should include:
