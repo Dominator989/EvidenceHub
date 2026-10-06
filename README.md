@@ -61,6 +61,25 @@ npm install
 npm run dev
 ```
 
+### Load demo data
+
+To populate a local development database with example products, requirements,
+and a document awaiting review:
+
+```bash
+npm run seed:demo
+```
+
+Sign in with:
+
+```text
+Email: demo@evidencehub.local
+Password: DemoPassword123!
+```
+
+The demo account and its sample data are intended for local development only.
+The seed command is explicit and is never run automatically by the application.
+
 The dashboard is available at `http://localhost:3000`. The database is created
 at `./data/evidencehub.sqlite`.
 
