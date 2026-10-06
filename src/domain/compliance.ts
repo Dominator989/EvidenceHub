@@ -29,6 +29,18 @@ export type EvidenceDocument = {
   uploadedAt: string;
 };
 
+export type EvidenceReviewAction = "approved" | "rejected" | "changes_requested";
+
+export type EvidenceAuditEvent = {
+  id: string;
+  documentId: string;
+  organisationId: string;
+  actorUserId: string;
+  action: EvidenceReviewAction;
+  note: string | null;
+  createdAt: string;
+};
+
 export type ComplianceSummary = {
   productId: string;
   status: "compliant" | "action_required" | "incomplete";

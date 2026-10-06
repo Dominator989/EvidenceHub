@@ -99,6 +99,10 @@ const documentSchema = z.object({
   expiresAt: z.string().datetime().nullable(),
   status: z.enum(["pending_review", "approved", "rejected"])
 });
+const reviewSchema = z.object({
+  action: z.enum(["approved", "rejected", "changes_requested"]),
+  note: z.string().nullable().default(null)
+});
 
 app.post("/api/products", (request, response) => {
   const user = requireUser(request, response);
@@ -130,6 +134,16 @@ app.get("/api/products/:productId/requirements", (request, response) => {
   if (!user) return;
   try {
     return response.json(service.getRequirements(request.params.productId, user.organisationId));
+  } catch (error) {
+    return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
+  }
+});
+
+app.get("/api/products/:productId/documents", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
+  try {
+    return response.json(service.getDocuments(request.params.productId, user.organisationId));
   } catch (error) {
     return response.status(404).json({ error: error instanceof Error ? error.message : "Product not found" });
   }
@@ -185,6 +199,29 @@ app.get("/api/products/:productId/documents/:documentId/download", (request, res
     return response.status(404).json({ error: "Document not found" });
   }
   return response.type(document.mimeType).download(storagePath, document.fileName);
+});
+
+app.post("/api/products/:productId/documents/:documentId/review", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
+  const result = reviewSchema.safeParse(request.body);
+  if (!result.success) return response.status(400).json({ error: result.error.flatten() });
+  try {
+    return response.json(service.reviewDocument(request.params.productId, request.params.documentId, { ...result.data, actorUserId: user.id }, user.organisationId));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Review failed";
+    return response.status(message.includes("required") ? 400 : 404).json({ error: message });
+  }
+});
+
+app.get("/api/products/:productId/documents/:documentId/audit", (request, response) => {
+  const user = requireUser(request, response);
+  if (!user) return;
+  try {
+    return response.json(service.getAuditEvents(request.params.productId, request.params.documentId, user.organisationId));
+  } catch (error) {
+    return response.status(404).json({ error: error instanceof Error ? error.message : "Document not found" });
+  }
 });
 
 app.get("/api/products/:productId/compliance", (request, response) => {

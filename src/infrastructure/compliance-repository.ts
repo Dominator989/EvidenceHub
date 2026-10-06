@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import type { EvidenceDocument, EvidenceRequirement, Product } from "../domain/compliance.js";
+import type { EvidenceAuditEvent, EvidenceDocument, EvidenceRequirement, EvidenceStatus, Product } from "../domain/compliance.js";
 
 export class ComplianceRepository {
   constructor(private readonly database: Database.Database) {}
@@ -54,5 +54,28 @@ export class ComplianceRepository {
     return this.database.prepare(
       "SELECT id, product_id as productId, requirement_id as requirementId, file_name as fileName, document_type as documentType, storage_key as storageKey, mime_type as mimeType, size_bytes as sizeBytes, expires_at as expiresAt, status, uploaded_at as uploadedAt FROM evidence_documents WHERE id = ?"
     ).get(id) as EvidenceDocument | undefined;
+  }
+
+  updateDocumentStatus(id: string, status: EvidenceStatus): void {
+    this.database.prepare("UPDATE evidence_documents SET status = ? WHERE id = ?").run(status, id);
+  }
+
+  addAuditEvent(event: EvidenceAuditEvent): EvidenceAuditEvent {
+    this.database.prepare(
+      `INSERT INTO evidence_audit_events
+        (id, document_id, organisation_id, actor_user_id, action, note, created_at)
+       VALUES (@id, @documentId, @organisationId, @actorUserId, @action, @note, @createdAt)`
+    ).run(event);
+    return event;
+  }
+
+  getAuditEvents(documentId: string, organisationId: string): EvidenceAuditEvent[] {
+    return this.database.prepare(
+      `SELECT id, document_id as documentId, organisation_id as organisationId,
+        actor_user_id as actorUserId, action, note, created_at as createdAt
+       FROM evidence_audit_events
+       WHERE document_id = ? AND organisation_id = ?
+       ORDER BY created_at DESC`
+    ).all(documentId, organisationId) as EvidenceAuditEvent[];
   }
 }
