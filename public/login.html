@@ -18,7 +18,11 @@
     .register-link:hover { border-color: var(--green); background: #e9f5ef; transform: translateY(-1px); }
     .register-link:hover::after { transform: translateX(2px); }
     .register-link:focus-visible { outline: 3px solid rgba(86, 166, 125, .25); outline-offset: 2px; }
-    footer { padding: 20px 24px; color: var(--muted); font-size: 13px; text-align: center; }
+    footer { margin-top: auto; padding: 20px 24px; border-top: 1px solid rgba(219, 229, 223, .8); color: var(--muted); font-size: 13px; text-align: center; }
+    .site-footer { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .footer-brand { color: var(--green-dark); font-weight: 700; letter-spacing: .01em; }
+    .footer-separator { color: #9ab1a5; }
+    .footer-copy { color: var(--muted); }
     @media (max-width: 480px) { main { padding: 28px 24px; } }
   </style>
 </head>
@@ -41,7 +45,7 @@
       <button>Create account</button>
     </form>
   </main>
-  <footer>&copy; 2026 Mitch Ludcke</footer>
+  <footer class="site-footer" aria-label="Site footer"><span class="footer-brand">EvidenceHub</span><span class="footer-separator" aria-hidden="true">•</span><span class="footer-copy">&copy; 2026 Mitch Ludcke</span></footer>
   <script>
     const loginForm = document.getElementById("login-form");
     const registerForm = document.getElementById("register-form");

@@ -27,7 +27,11 @@
     button { background: var(--green); } button:hover { background: var(--green-dark); } .product { border-color: var(--line); background: #fff; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; } .product:hover { border-color: #86b89f; transform: translateY(-1px); box-shadow: 0 5px 12px rgba(25, 54, 43, .07); } .product.selected { border-color: var(--green); background: var(--mint); box-shadow: inset 3px 0 var(--green); }
     .metric { background: #f3f7f4; border: 1px solid #e2ebe5; } .metric strong { color: var(--green-dark); font-size: 27px; } .status { border: 1px solid transparent; } .compliant { color: #176044; background: #dff3e8; border-color: #b9dfca; } .action_required { color: var(--amber); background: #fff4cf; border-color: #ead797; } .incomplete { color: #9b3030; background: #fde6e3; border-color: #edc2bd; }
     .evidence-card { border-color: var(--line); background: #fff; } .renewal-item { border-color: #e4ece7; } .renewal-item:hover { background: #fafcfb; } .export-link { border-color: #9bc9b0; color: var(--green-dark); background: #f5fbf7; } .export-link:hover { border-color: var(--green); background: var(--mint); }
-    footer { margin-top: auto; padding: 20px 24px; color: var(--ink-muted); font-size: 13px; text-align: center; }
+    footer { margin-top: auto; padding: 20px 24px; border-top: 1px solid rgba(219, 229, 223, .8); color: var(--ink-muted); font-size: 13px; text-align: center; }
+    .site-footer { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .footer-brand { color: var(--green-dark); font-weight: 700; letter-spacing: .01em; }
+    .footer-separator { color: #9ab1a5; }
+    .footer-copy { color: var(--ink-muted); }
     @media (max-width: 760px) { header #logout { position: static; margin-top: 18px; } header { padding-top: 26px; } main { margin-top: 24px; } aside { position: static; } .product-heading, .renewal-toolbar { align-items: flex-start; flex-direction: column; } .export-link { width: 100%; text-align: center; } }
   </style>
 </head>
@@ -46,7 +50,7 @@
     </aside>
     <section id="detail"><h2>Select a product</h2><p class="muted">Create or select a product to manage its evidence.</p></section>
   </main>
-  <footer>&copy; 2026 Mitch Ludcke</footer>
+  <footer class="site-footer" aria-label="Site footer"><span class="footer-brand">EvidenceHub</span><span class="footer-separator" aria-hidden="true">•</span><span class="footer-copy">&copy; 2026 Mitch Ludcke</span></footer>
   <script>
     const state = { products: [], selected: null };
     const el = (id) => document.getElementById(id);
