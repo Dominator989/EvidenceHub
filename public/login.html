@@ -9,9 +9,16 @@
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; } main { width: min(420px, calc(100% - 40px)); background: white; padding: 30px; border: 1px solid #dce4ef; border-radius: 14px; }
     h1 { color: #267a60; } label { display: block; font-weight: 700; font-size: 13px; margin: 14px 0 6px; } input, button { width: 100%; padding: 11px; border: 1px solid #c7d3e3; border-radius: 8px; font: inherit; box-sizing: border-box; } button { margin-top: 18px; background: #267a60; color: white; border: 0; font-weight: 700; cursor: pointer; } .hidden { display: none; } .error { color: #9b3030; min-height: 20px; }
     :root { --ink: #16231f; --muted: #66756f; --green: #227254; --green-dark: #174e3b; --line: #dbe5df; }
-    body { color: var(--ink); background: radial-gradient(circle at 12% 10%, #e3f1e9 0, transparent 32%), linear-gradient(135deg, #f5f8f4 0%, #e9f1ec 100%); font-family: "Aptos", "Segoe UI", sans-serif; }
+    body { color: var(--ink); background: radial-gradient(circle at 12% 10%, #e3f1e9 0, transparent 32%), linear-gradient(135deg, #f5f8f4 0%, #e9f1ec 100%); font-family: "Aptos", "Segoe UI", sans-serif; display: flex; flex-direction: column; }
     main { padding: 38px; border-color: var(--line); border-radius: 10px; box-shadow: 0 20px 50px rgba(25, 54, 43, .12); } h1 { margin-bottom: 8px; color: var(--green-dark); font-size: 32px; letter-spacing: -.02em; } main > p { color: var(--muted); line-height: 1.55; } hr { margin: 28px 0 22px; border: 0; border-top: 1px solid var(--line); }
     label { color: var(--ink); } input { background: #fbfcf9; border-color: #c7d6cd; } input:focus { outline: 3px solid rgba(86, 166, 125, .2); border-color: var(--green); } button { background: var(--green); } button:hover { background: var(--green-dark); } a { color: var(--green-dark); font-weight: 700; } .error { color: #9b3030; }
+    .register-prompt { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0; color: var(--muted); font-size: 14px; }
+    .register-link { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border: 1px solid #9bc9b0; border-radius: 8px; background: #f5fbf7; color: var(--green-dark); text-decoration: none; white-space: nowrap; transition: background .15s ease, border-color .15s ease, transform .15s ease; }
+    .register-link::after { content: "\2192"; font-size: 16px; transition: transform .15s ease; }
+    .register-link:hover { border-color: var(--green); background: #e9f5ef; transform: translateY(-1px); }
+    .register-link:hover::after { transform: translateX(2px); }
+    .register-link:focus-visible { outline: 3px solid rgba(86, 166, 125, .25); outline-offset: 2px; }
+    footer { padding: 20px 24px; color: var(--muted); font-size: 13px; text-align: center; }
     @media (max-width: 480px) { main { padding: 28px 24px; } }
   </style>
 </head>
@@ -26,7 +33,7 @@
       <p id="login-error" class="error"></p>
     </form>
     <hr>
-    <p>New organisation? <a href="#" id="show-register">Create an account</a></p>
+    <p class="register-prompt"><span>New to EvidenceHub?</span><a class="register-link" href="#" id="show-register" aria-controls="register-form" aria-expanded="false">Create an account</a></p>
     <form id="register-form" class="hidden">
       <label for="organisation">Organisation name</label><input id="organisation" required>
       <label for="register-email">Email</label><input id="register-email" type="email" required>
@@ -34,11 +41,12 @@
       <button>Create account</button>
     </form>
   </main>
+  <footer>&copy; 2026 Mitch Ludcke</footer>
   <script>
     const loginForm = document.getElementById("login-form");
     const registerForm = document.getElementById("register-form");
     const error = document.getElementById("login-error");
-    document.getElementById("show-register").addEventListener("click", (event) => { event.preventDefault(); registerForm.classList.toggle("hidden"); });
+    document.getElementById("show-register").addEventListener("click", (event) => { event.preventDefault(); registerForm.classList.toggle("hidden"); event.currentTarget.setAttribute("aria-expanded", String(!registerForm.classList.contains("hidden"))); });
     async function submit(path, body) {
       const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const result = await response.json();

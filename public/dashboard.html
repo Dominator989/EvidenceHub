@@ -17,7 +17,7 @@
     .evidence-card { border: 1px solid #dce4ef; border-radius: 9px; padding: 14px; margin: 10px 0; } .evidence-card header { display: flex; justify-content: space-between; gap: 12px; padding: 0; background: transparent; color: inherit; } .evidence-card header p { margin: 4px 0; color: #63728a; } .review-actions { display: flex; gap: 8px; margin-top: 12px; } .review-actions button { width: auto; margin: 0; padding: 8px 12px; } .review-actions .reject { background: #9b3030; } .audit { margin-top: 10px; padding-left: 18px; border-left: 2px solid #dce4ef; } .product-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; } .product-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; } .export-link { display: inline-block; padding: 9px 12px; border: 1px solid #267a60; border-radius: 8px; color: #267a60; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; } .export-link:hover { background: #eef9f4; } .share-button { width: auto; margin: 0; padding: 9px 12px; background: #174e3b; white-space: nowrap; } .renewal-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; } .renewal-toolbar select { width: auto; min-width: 130px; } .renewal-item { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid #dce4ef; } .renewal-item:last-child { border-bottom: 0; } .renewal-item strong { display: block; } .renewal-item .expired { color: #9b3030; } .renewal-item .expiring_soon { color: #805b00; } .remind-button { width: auto; margin-top: 8px; padding: 7px 10px; }
     li { margin: 8px 0; } .notice { min-height: 20px; color: #9b3030; font-size: 14px; } @media (max-width: 760px) { main { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; } }
     :root { --ink: #16231f; --ink-muted: #66756f; --paper: #fbfcf9; --line: #dbe5df; --green: #227254; --green-dark: #174e3b; --mint: #e9f5ef; --amber: #946d12; }
-    body { color: var(--ink); background: linear-gradient(135deg, #f5f8f4 0%, #eef4f0 100%); font-family: "Aptos", "Segoe UI", sans-serif; }
+    body { color: var(--ink); background: linear-gradient(135deg, #f5f8f4 0%, #eef4f0 100%); font-family: "Aptos", "Segoe UI", sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
     header { position: relative; padding-top: 34px; padding-bottom: 30px; background: var(--ink); border-bottom: 4px solid #9acbb2; }
     header h1 { letter-spacing: .01em; font-size: 30px; } header p { margin-top: 8px; letter-spacing: .02em; }
     header #logout { position: absolute; top: 32px; right: max(24px, calc((100% - 1120px) / 2)); width: auto; padding: 9px 14px; border: 1px solid #61746c; }
@@ -27,6 +27,7 @@
     button { background: var(--green); } button:hover { background: var(--green-dark); } .product { border-color: var(--line); background: #fff; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; } .product:hover { border-color: #86b89f; transform: translateY(-1px); box-shadow: 0 5px 12px rgba(25, 54, 43, .07); } .product.selected { border-color: var(--green); background: var(--mint); box-shadow: inset 3px 0 var(--green); }
     .metric { background: #f3f7f4; border: 1px solid #e2ebe5; } .metric strong { color: var(--green-dark); font-size: 27px; } .status { border: 1px solid transparent; } .compliant { color: #176044; background: #dff3e8; border-color: #b9dfca; } .action_required { color: var(--amber); background: #fff4cf; border-color: #ead797; } .incomplete { color: #9b3030; background: #fde6e3; border-color: #edc2bd; }
     .evidence-card { border-color: var(--line); background: #fff; } .renewal-item { border-color: #e4ece7; } .renewal-item:hover { background: #fafcfb; } .export-link { border-color: #9bc9b0; color: var(--green-dark); background: #f5fbf7; } .export-link:hover { border-color: var(--green); background: var(--mint); }
+    footer { margin-top: auto; padding: 20px 24px; color: var(--ink-muted); font-size: 13px; text-align: center; }
     @media (max-width: 760px) { header #logout { position: static; margin-top: 18px; } header { padding-top: 26px; } main { margin-top: 24px; } aside { position: static; } .product-heading, .renewal-toolbar { align-items: flex-start; flex-direction: column; } .export-link { width: 100%; text-align: center; } }
   </style>
 </head>
@@ -45,6 +46,7 @@
     </aside>
     <section id="detail"><h2>Select a product</h2><p class="muted">Create or select a product to manage its evidence.</p></section>
   </main>
+  <footer>&copy; 2026 Mitch Ludcke</footer>
   <script>
     const state = { products: [], selected: null };
     const el = (id) => document.getElementById(id);
