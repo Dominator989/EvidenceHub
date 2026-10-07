@@ -18,14 +18,18 @@
     .compliant { color: #176044; background: #dff3e8; } .action_required { color: #946d12; background: #fff4cf; } .incomplete { color: #9b3030; background: #fde6e3; }
     .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; } .metric { padding: 14px; background: #f3f7f4; border: 1px solid #e2ebe5; border-radius: 8px; } .metric strong { display: block; color: #174e3b; font-size: 25px; margin-top: 5px; }
     .document { display: flex; justify-content: space-between; gap: 18px; align-items: center; padding: 15px 0; border-bottom: 1px solid #e4ece7; } .document:last-child { border-bottom: 0; } .document strong { display: block; } .document a { color: #174e3b; font-weight: 700; }
-    footer { padding: 20px 24px; color: #66756f; font-size: 13px; text-align: center; }
+    footer { margin-top: auto; padding: 20px 24px; border-top: 1px solid rgba(219, 229, 223, .8); color: #66756f; font-size: 13px; text-align: center; }
+    .site-footer { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .footer-brand { color: #174e3b; font-weight: 700; letter-spacing: .01em; }
+    .footer-separator { color: #9ab1a5; }
+    .footer-copy { color: #66756f; }
     .error { color: #9b3030; } @media (max-width: 640px) { main { width: min(100% - 28px, 880px); margin-top: 20px; } section { padding: 20px; } .heading, .document { align-items: flex-start; flex-direction: column; } .metrics { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <header><strong>EvidenceHub</strong><p>Read-only evidence pack</p></header>
   <main id="content"><section><p class="muted">Loading shared evidence pack...</p></section></main>
-  <footer>&copy; 2026 Mitch Ludcke</footer>
+  <footer class="site-footer" aria-label="Site footer"><span class="footer-brand">EvidenceHub</span><span class="footer-separator" aria-hidden="true">•</span><span class="footer-copy">&copy; 2026 Mitch Ludcke</span></footer>
   <script>
     const token = location.pathname.split("/").filter(Boolean).pop();
     const content = document.getElementById("content");
